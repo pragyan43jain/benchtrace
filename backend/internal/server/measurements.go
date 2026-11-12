@@ -14,6 +14,9 @@ type analysisOptions struct {
 	CPHA      int     `json:"cpha"`
 }
 
+func validOptions(p analysisOptions) bool {
+	return p.Threshold > 0 && p.Threshold <= 100 && p.Baud >= 1 && p.Baud <= 10000000 && p.CPOL >= 0 && p.CPOL <= 1 && p.CPHA >= 0 && p.CPHA <= 1
+}
 func (s *Server) reanalyze(w http.ResponseWriter, r *http.Request) {
 	if !s.owns(w, r) {
 		return
@@ -22,7 +25,7 @@ func (s *Server) reanalyze(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &p) {
 		return
 	}
-	if p.Threshold <= 0 || p.Threshold > 100 || p.Baud < 1 || p.Baud > 10000000 || p.CPOL < 0 || p.CPOL > 1 || p.CPHA < 0 || p.CPHA > 1 {
+	if !validOptions(p) {
 		fail(w, 400, "Invalid threshold, baud rate or SPI mode")
 		return
 	}

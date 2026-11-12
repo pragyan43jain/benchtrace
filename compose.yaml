@@ -1,5 +1,6 @@
 services:
   db:
+    restart: unless-stopped
     image: pgvector/pgvector:0.8.0-pg17
     environment:
       POSTGRES_USER: benchtrace
@@ -13,11 +14,23 @@ services:
       timeout: 3s
       retries: 20
   redis:
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     image: redis:7.4.3-alpine
-    command: [redis-server, --appendonly, 'yes']
+    command: [redis-server, --appendonly, 'yes', --maxmemory, 128mb, --maxmemory-policy, noeviction]
     volumes:
       - redis:/data
   engine:
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     build: ./ai-engine
     environment:
       ENGINE_TOKEN: ${ENGINE_TOKEN:?Set ENGINE_TOKEN in .env}
@@ -31,6 +44,12 @@ services:
     read_only: true
     tmpfs: [/tmp]
   api:
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://localhost:8080/api/health]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     build: ./backend
     environment:
       DATABASE_URL: postgres://benchtrace:${POSTGRES_PASSWORD}@db:5432/benchtrace
@@ -46,13 +65,16 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       engine:
-        condition: service_started
+        condition: service_healthy
   web:
+    restart: unless-stopped
     build: ./frontend
     ports: ['127.0.0.1:8080:80']
-    depends_on: [api]
+    depends_on:
+      api:
+        condition: service_healthy
 volumes:
   postgres:
   redis:

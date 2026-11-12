@@ -54,6 +54,29 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback(r.Context())
+	if _, e = tx.Exec(r.Context(), "SELECT id FROM users WHERE id=$1 FOR UPDATE", user(r)); dbError(w, e) {
+		return
+	}
+	var count int
+	var total int64
+	if e = tx.QueryRow(r.Context(), "SELECT count(*) FROM project_files WHERE project_id::text=$1", r.PathValue("project")).Scan(&count); dbError(w, e) {
+		return
+	}
+	if e = tx.QueryRow(r.Context(), "SELECT coalesce(sum(f.size),0) FROM project_files f JOIN projects p ON p.id=f.project_id WHERE p.owner_id=$1", user(r)).Scan(&total); dbError(w, e) {
+		return
+	}
+	incoming := int64(0)
+	for _, f := range files {
+		incoming += int64(len(f.Data))
+	}
+	if count+len(files) > 200 || total+incoming > 1<<30 {
+		fail(w, 409, "Storage quota: at most 200 files per project and 1 GiB per account")
+		return
+	}
+	var preferences []byte
+	if e = tx.QueryRow(r.Context(), "SELECT preferences FROM projects WHERE id::text=$1", r.PathValue("project")).Scan(&preferences); dbError(w, e) {
+		return
+	}
 	written := []string{}
 	committed := false
 	defer func() {
@@ -77,7 +100,7 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 		if cat == "" {
 			cat = storage.Category(file.Name)
 		}
-		_, e = tx.Exec(r.Context(), "INSERT INTO project_files(id,project_id,name,category,storage_key,sha256,size) VALUES($1,$2,$3,$4,$5,$6,$7)", id, r.PathValue("project"), file.Name, cat, key, auth.Digest(string(file.Data)), len(file.Data))
+		_, e = tx.Exec(r.Context(), "INSERT INTO project_files(id,project_id,name,category,storage_key,sha256,size,options) VALUES($1,$2,$3,$4,$5,$6,$7,$8)", id, r.PathValue("project"), file.Name, cat, key, auth.Digest(string(file.Data)), len(file.Data), preferences)
 		if dbError(w, e) {
 			return
 		}
@@ -86,6 +109,10 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		ids = append(ids, id)
+	}
+	detail, _ := json.Marshal(map[string]any{"file_ids": ids, "count": len(ids)})
+	if _, e = tx.Exec(r.Context(), "INSERT INTO project_events(id,project_id,actor_id,kind,detail) VALUES($1,$2,$3,'files_uploaded',$4)", auth.ID(), r.PathValue("project"), user(r), detail); dbError(w, e) {
+		return
 	}
 	if dbError(w, tx.Commit(r.Context())) {
 		return
@@ -98,7 +125,7 @@ func (s *Server) file(w http.ResponseWriter, r *http.Request) {
 	if !s.owns(w, r) {
 		return
 	}
-	v, e := s.query(r, "SELECT row_to_json(f) FROM (SELECT id,name,category,status,error,analysis,sha256 FROM project_files WHERE id::text=$1 AND project_id::text=$2) f", r.PathValue("file"), r.PathValue("project"))
+	v, e := s.query(r, "SELECT row_to_json(f) FROM (SELECT id,name,category,status,error,analysis,sha256,options FROM project_files WHERE id::text=$1 AND project_id::text=$2) f", r.PathValue("file"), r.PathValue("project"))
 	if dbError(w, e) {
 		return
 	}
@@ -150,7 +177,7 @@ func (s *Server) Worker(ctx context.Context) {
 			slog.Error("queue attempt limit", "error", e)
 			continue
 		}
-		_, e = s.DB.Exec(ctx, "UPDATE project_files f SET status='failed',error=j.error FROM background_jobs j WHERE j.file_id=f.id AND j.status='failed' AND f.status='processing'")
+		_, e = s.DB.Exec(ctx, "UPDATE project_files f SET status='failed',error=j.error FROM background_jobs j WHERE j.file_id=f.id AND j.status='failed' AND f.status='processing' AND NOT EXISTS(SELECT 1 FROM background_jobs active WHERE active.file_id=f.id AND active.status IN ('queued','processing'))")
 		if e != nil {
 			slog.Error("queue file recovery", "error", e)
 			continue
@@ -253,14 +280,12 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Query requires 1–2000 characters")
 		return
 	}
-	var v struct {
-		Embedding []float64 `json:"embedding"`
-	}
-	if e := s.engine(r.Context(), "/embed", map[string]string{"text": q.Query}, &v); e != nil {
+	embedding, e := s.embedding(r.Context(), q.Query)
+	if e != nil {
 		fail(w, 502, "Retrieval engine unavailable")
 		return
 	}
-	b, _ := json.Marshal(v.Embedding)
+	b, _ := json.Marshal(embedding)
 	rows, e := s.query(r, `SELECT row_to_json(x) FROM (SELECT c.id,c.document_id AS file_id,f.name AS source,c.page,c.content,1-(c.embedding <=> $2::vector) AS similarity FROM document_chunks c JOIN project_files f ON f.id=c.document_id WHERE f.project_id::text=$1 ORDER BY c.embedding <=> $2::vector LIMIT 6) x`, r.PathValue("project"), string(b))
 	if dbError(w, e) {
 		return

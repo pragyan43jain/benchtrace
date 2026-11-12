@@ -1,0 +1,14 @@
+ALTER TABLE projects ADD COLUMN preferences jsonb NOT NULL DEFAULT '{"threshold":1.65,"baud":115200,"cpol":0,"cpha":0}';
+ALTER TABLE knowledge_entries ADD COLUMN kind text NOT NULL DEFAULT 'investigation' CHECK(kind IN ('investigation','procedure'));
+ALTER TABLE knowledge_entries ADD COLUMN verification text NOT NULL DEFAULT 'unverified' CHECK(verification IN ('unverified','user_confirmed'));
+CREATE TABLE project_events(id uuid PRIMARY KEY, project_id uuid NOT NULL REFERENCES projects ON DELETE CASCADE, actor_id uuid NOT NULL REFERENCES users, kind text NOT NULL, detail jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX project_events_project ON project_events(project_id,created_at);
+ALTER TABLE users ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE project_files ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE diagnostic_hypotheses ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE knowledge_entries ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
+CREATE FUNCTION touch_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=now(); RETURN NEW; END; $$;
+CREATE TRIGGER users_updated BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+CREATE TRIGGER files_updated BEFORE UPDATE ON project_files FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+CREATE TRIGGER hypotheses_updated BEFORE UPDATE ON diagnostic_hypotheses FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+CREATE TRIGGER knowledge_updated BEFORE UPDATE ON knowledge_entries FOR EACH ROW EXECUTE FUNCTION touch_updated_at();

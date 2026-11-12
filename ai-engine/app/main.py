@@ -3,7 +3,8 @@ import secrets
 from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException, Depends
 from pydantic import BaseModel, Field
-from .evidence import process,embed
+from .evidence import embed
+from .sandbox import isolated_process
 from .diagnostics import diagnose
 app=FastAPI(title='BenchTrace engineering engine',version='0.1.0')
 
@@ -15,6 +16,7 @@ class ProcessRequest(BaseModel):
     storage_key: str=Field(pattern=r'^[a-f0-9-]{36}\.[a-z_]+$',max_length=60)
     options: dict=Field(default_factory=dict)
 class DiagnosticRequest(BaseModel):
+    problem:str=Field(default="",max_length=10000)
     files:list[dict]=Field(max_length=200)
     tests:list[dict]=Field(default_factory=list,max_length=1000)
 class EmbedRequest(BaseModel):
@@ -24,10 +26,10 @@ class EmbedRequest(BaseModel):
 def health():return {'status':'ok'}
 @app.post('/process',dependencies=[Depends(authorize)])
 def analyze(request:ProcessRequest):
-    try:return process(Path('/uploads')/request.storage_key,request.options)
+    try:return isolated_process(Path('/uploads')/request.storage_key,request.options)
     except (ValueError,UnicodeError,OSError,KeyError) as e:raise HTTPException(422,str(e)[:500]) from e
 @app.post('/diagnose',dependencies=[Depends(authorize)])
-def diagnostic(request:DiagnosticRequest):return diagnose(request.files,request.tests)
+def diagnostic(request:DiagnosticRequest):return diagnose(request.files,request.tests,request.problem)
 @app.post('/embed',dependencies=[Depends(authorize)])
 def embedding(request:EmbedRequest):return {'embedding':embed(request.text),'method':os.getenv('EMBEDDING_MODE','semantic')}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"benchtrace/internal/server"
+	"benchtrace/migrations"
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -22,11 +23,7 @@ func main() {
 		panic(e)
 	}
 	defer db.Close()
-	migration, e := os.ReadFile("migrations/001_init.sql")
-	if e != nil {
-		panic(e)
-	}
-	if _, e = db.Exec(ctx, string(migration)); e != nil {
+	if e = migrations.Apply(ctx, db); e != nil {
 		panic(e)
 	}
 	dir := os.Getenv("UPLOAD_DIR")

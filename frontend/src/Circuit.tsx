@@ -1,2 +1,91 @@
-import {useState} from 'react';
-export function Circuit({analysis:a}:{analysis:any}){const [selected,setSelected]=useState<string|null>(null);const net=a.nets.find((n:any)=>n.name===selected);const connected=new Set(net?.nodes.map((n:any)=>n.reference)||[]);const width=700,height=Math.max(200,a.components.length*70+30);return <><p className="muted">Select a net to inspect connected component pins. Connectivity comes from the uploaded netlist; it does not establish physical wiring.</p><div className="row">{a.nets.map((n:any,i:number)=><button className={'badge '+(selected===n.name?'green':'')} key={i} onClick={()=>setSelected(n.name)}>{n.name}</button>)}</div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Extracted circuit connectivity" className="circuit-graph">{a.components.map((c:any,i:number)=>{const y=25+i*70;return <g key={c.reference}>{connected.has(c.reference)&&<path d={`M 220 ${y+20} H 410 V ${height/2} H 510`} stroke="#4f8cff" fill="none"/>}<rect x="15" y={y} width="205" height="42" rx="5" fill={connected.has(c.reference)?'#1c3150':'#171e2b'} stroke={connected.has(c.reference)?'#4f8cff':'#354258'}/><text x="28" y={y+25} fill="#c1d0e4" fontSize="12">{c.reference} · {c.value}</text></g>})}<rect x="510" y={height/2-22} width="170" height="44" rx="5" fill="#1b2534" stroke="#436189"/><text x="525" y={height/2+4} fill="#abc9f4" fontSize="13">{selected||'Select a net'}</text></svg>{net&&<div className="panel"><h3>{net.name}</h3>{net.nodes.length?<div className="row">{net.nodes.map((n:any,i:number)=><span className="badge" key={i}>{n.reference} · pin {n.pin}</span>)}</div>:<p className="muted">Pin connectivity is unavailable in this schematic extraction. Import an exported .net file.</p>}</div>}</>}
+import { useState } from "react";
+export function Circuit({ analysis: a }: { analysis: any }) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const net = a.nets.find((n: any) => n.name === selected);
+  const connected = new Set(net?.nodes.map((n: any) => n.reference) || []);
+  const width = 700,
+    height = Math.max(200, a.components.length * 70 + 30);
+  return (
+    <>
+      <p className="muted">
+        Select a net to inspect connected component pins. Connectivity comes
+        from the uploaded netlist; it does not establish physical wiring.
+      </p>
+      <div className="row">
+        {a.nets.map((n: any, i: number) => (
+          <button
+            className={"badge " + (selected === n.name ? "green" : "")}
+            key={i}
+            onClick={() => setSelected(n.name)}
+          >
+            {n.name}
+          </button>
+        ))}
+      </div>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Extracted circuit connectivity"
+        className="circuit-graph"
+      >
+        {a.components.map((c: any, i: number) => {
+          const y = 25 + i * 70;
+          return (
+            <g key={c.reference}>
+              {connected.has(c.reference) && (
+                <path
+                  d={`M 220 ${y + 20} H 410 V ${height / 2} H 510`}
+                  stroke="#4f8cff"
+                  fill="none"
+                />
+              )}
+              <rect
+                x="15"
+                y={y}
+                width="205"
+                height="42"
+                rx="5"
+                fill={connected.has(c.reference) ? "#1c3150" : "#171e2b"}
+                stroke={connected.has(c.reference) ? "#4f8cff" : "#354258"}
+              />
+              <text x="28" y={y + 25} fill="#c1d0e4" fontSize="12">
+                {c.reference} · {c.value}
+              </text>
+            </g>
+          );
+        })}
+        <rect
+          x="510"
+          y={height / 2 - 22}
+          width="170"
+          height="44"
+          rx="5"
+          fill="#1b2534"
+          stroke="#436189"
+        />
+        <text x="525" y={height / 2 + 4} fill="#abc9f4" fontSize="13">
+          {selected || "Select a net"}
+        </text>
+      </svg>
+      {net && (
+        <div className="panel">
+          <h3>{net.name}</h3>
+          {net.nodes.length ? (
+            <div className="row">
+              {net.nodes.map((n: any, i: number) => (
+                <span className="badge" key={i}>
+                  {n.reference} · pin {n.pin}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="muted">
+              Pin connectivity is unavailable in this schematic extraction.
+              Import an exported .net file.
+            </p>
+          )}
+        </div>
+      )}
+    </>
+  );
+}

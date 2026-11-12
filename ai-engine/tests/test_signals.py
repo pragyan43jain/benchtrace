@@ -110,3 +110,22 @@ def test_circuit_firmware_pin_correlation():
     files=[dict(id='c',name='c.net',analysis=circuit),dict(id='f',name='f.ino',analysis=firmware('Wire.begin(22,21);'))]
     h=next(h for h in diagnose(files)['hypotheses'] if h['key']=='pins')
     assert {e['file_id'] for e in h['supporting_evidence']}=={'c','f'}
+
+def test_firmware_does_not_analyze_string_literals():
+    a=firmware('Serial.println("Wire.beginTransmission(0x49)");\nWire.begin(21,22);')
+    assert not any(f['type']=='i2c_address' for f in a['findings'])
+    assert a['findings'][0]['line']==2
+
+def test_ten_bit_i2c_prefix_is_not_treated_as_reliable_seven_bit_address():
+    r=decode_i2c(*i2c_fixture(0x78,True))
+    assert not r['reliable'] and any('10-bit' in w for w in r['warnings'])
+
+def test_empty_uart_and_spi_are_not_claimed_decodable():
+    t=np.arange(100)*1e-7;high=np.full(100,3.3)
+    assert not decode_uart(t,high)['reliable']
+    assert not decode_spi(t,high,high,high)['reliable']
+
+def test_filter_alignment_and_large_preview_preserve_endpoints():
+    t=np.arange(10)*.001;y=np.arange(10,dtype=float)
+    s=stats(t,y);assert s['moving_average']==pytest.approx([2,3,4,5,6,7])
+    assert s['moving_average_time']==pytest.approx(t[2:-2])

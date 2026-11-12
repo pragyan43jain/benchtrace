@@ -5,14 +5,14 @@ No production-completeness claim is made until all required checks pass.
 | Stage | Status | Acceptance |
 |---|---|---|
 | 0 Repository inspection | Complete | Empty repository; Go, Python, Node, Docker and GitHub available |
-| 1 Foundation | In progress | PostgreSQL migrations, sessions, ownership, projects, React shell |
-| 2 Documents | Not implemented | Safe uploads, PDF extraction, cited retrieval |
-| 3 Signals | Not implemented | Validated CSV, tested FFT and I2C/UART/SPI decoding, viewer |
-| 4 Engineering intelligence | Not implemented | Bounded firmware and KiCad parsing |
-| 5 Diagnostics | Not implemented | Evidence-linked ranking, contradictions, verification tests |
-| 6 Product workflow | Not implemented | Durable investigations, reports, knowledge, job updates |
-| 7 Production quality | Not implemented | Security tests, integration/browser tests, Docker, CI |
-| 8 Release | In progress | Documentation, reproducible simulated demo, GitHub milestones |
+| 1 Foundation | Implemented; regression verification underway | Sessions, owner isolation, projects, versioned migrations, React workspace |
+| 2 Documents | Implemented supported subset | PDF/text extraction, structured explicit characteristics, local semantic retrieval, cited answers |
+| 3 Signals | Implemented supported subset | Validated CSV, numerical analysis, bounded I2C/UART/SPI, waveform controls and comparison |
+| 4 Engineering intelligence | Partially implemented | Bounded firmware patterns and KiCad netlist graph; further static-analysis edge cases remain |
+| 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, five competing rule families, traceable tests and ranking |
+| 6 Product workflow | Implemented; browser regression underway | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events |
+| 7 Production quality | In progress | Security checks and local deployment pass; final CI/release and remaining audit items pending |
+| 8 Release | In progress | Required docs, screenshots, reproducible simulation and GitHub milestones; image publication pending |
 
 ## Design commitments
 - All demo captures explicitly simulated; no physical verification claims.
@@ -36,3 +36,14 @@ Added semantic BGE/pgvector retrieval, constrained extractive RAG, configurable 
 Executed against the running Compose stack: **API integration passed** for registration/login/logout, CSRF rejection, project management, second-account isolation, ZIP ingestion, background processing, waveform decoding, document retrieval, diagnosis, persisted test outcomes across reruns, report generation and private knowledge storage. Engine evaluation: **30 passed** before the additional circuit-correlation test. Frontend: production build and **2 unit tests passed**. npm audit: **0 vulnerabilities**.
 
 Open gates: browser E2E, final rebuilt images, Go/Python dependency remediation and rescan, GitHub CI execution, final documentation/screenshots. Earlier Go/Python audits detected vulnerable initial pins; upgrades are in progress. Public hosting and physical hardware validation are not claimed.
+
+
+## Milestone 3 — audit-driven completion work
+
+Created `docs/REQUIREMENTS.md` to preserve the full requested scope. Added structured source-backed datasheet characteristics, disposable parser processes with CPU/memory/wall-time limits, checksum-verified database migrations, project history/defaults, selected investigation evidence, standalone procedures, component browsing, verified-result filtering, source-hash report manifests, storage quotas and atomic Redis API rate limits. Split evidence, hypothesis and knowledge UI modules; waveform tools are loaded on demand. Added provider-contract, parser, API and browser isolation coverage. Completed the README with real screenshots and startup instructions.
+
+Executed against the rebuilt stack: expanded API integration **passed**, including PDF upload, preferences, selected evidence, components/history, waveform comparison, procedures, verified filtering and account updates. Negative security integration **passed**. Engine suite **48 passed** against source (image regression is running). Frontend production build and **2 unit tests passed**; npm audit **0 vulnerabilities**. Prior Go and Python package scans were clean after remediation; current Go rescan and three browser scenarios are running.
+
+Remaining: finish the unchanged-image/browser checks, push and obtain green GitHub CI, exercise release-image publication, and close the remaining audit rows. No claim of 100% completion or public production hosting.
+
+Milestone 3 verification completed: rebuilt-image engine suite **48 passed** (one test-client deprecation warning); browser suite **3 passed** (full investigation, session restore/login/logout, owner-only WebSocket events); Go race tests and vet **passed**; `govulncheck` **no vulnerabilities found**. Both API integration suites passed on the rebuilt stack. Remaining work is tracked in the requirement audit; a green final CI and exercised release workflow are still required.

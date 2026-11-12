@@ -3,6 +3,16 @@ from pathlib import Path
 import csv
 import json
 import zipfile
+def pdf_bytes(text):
+    escaped=text.replace('\\','\\\\').replace('(','\\(').replace(')','\\)')
+    stream=f'BT /F1 12 Tf 50 700 Td ({escaped}) Tj ET'.encode()
+    objects=[b'<< /Type /Catalog /Pages 2 0 R >>',b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',b'<< /Length '+str(len(stream)).encode()+b' >>\nstream\n'+stream+b'\nendstream']
+    out=b'%PDF-1.4\n';offsets=[]
+    for i,obj in enumerate(objects,1):offsets.append(len(out));out+=f'{i} 0 obj\n'.encode()+obj+b'\nendobj\n'
+    offset=len(out);out+=b'xref\n0 6\n0000000000 65535 f \n'
+    for x in offsets:out+=f'{x:010d} 00000 n \n'.encode()
+    return out+f'trailer\n<< /Root 1 0 R /Size 6 >>\nstartxref\n{offset}\n%%EOF'.encode()
+
 root=Path(__file__).parent/'esp32-i2c'
 root.mkdir(exist_ok=True)
 
@@ -16,6 +26,8 @@ def capture(address,ack,path):
     with path.open('w') as f:
         writer=csv.writer(f);writer.writerow(['time','scl','sda'])
         for i,(scl,sda) in enumerate(samples):writer.writerow([f'{i*0.5e-6:.9f}',scl,sda])
+
+(root/'sensor-model.pdf').write_bytes(pdf_bytes('SIMULATED MODEL ONLY - 7-bit I2C address: 0x48. No physical sensor specification.'))
 
 capture(0x49,False,root/'failure.csv')
 capture(0x48,True,root/'verification.csv')
@@ -59,5 +71,6 @@ This document is NOT a specification for any physical sensor.
 (root/'manifest.json').write_text(json.dumps({'simulated':True,'sample_rate_hz':2000000,'clock_hz':100000,'logic_high_v':3.3,'fault':'firmware address 0x49 instead of model address 0x48','known_limits':['ideal edges','no analog noise','no physical sensor','no electrical compliance claim']},indent=2))
 with zipfile.ZipFile(root/'initial-evidence.zip','w',zipfile.ZIP_DEFLATED) as archive:
     for name in ['firmware.ino','failure.csv','circuit.net','serial.txt','manifest.json']:
-        archive.write(root/name,name)
+        info=zipfile.ZipInfo(name,date_time=(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED
+        archive.writestr(info,(root/name).read_bytes())
 print('Generated simulated failure, verification, documentation and circuit fixtures.')

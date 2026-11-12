@@ -2,7 +2,10 @@
 import re
 
 
-def diagnose(files, tests=None):
+def diagnose(files, tests=None, problem=""):
+    if problem and re.search(r'\b(?:SPI|UART|CAN|USB)\b',problem,re.I) and not re.search(r'\bI[2²]C\b',problem,re.I):
+        return dict(applicable=False,problem=problem,hypotheses=[],summary='Current root-cause rules support I2C investigations. Use waveform analysis for this protocol; no I2C diagnosis was inferred.')
+    symptoms=[label for pattern,label in [(r'nack|not ack|no ack','missing acknowledgement'),(r'timeout|timed out','timeout'),(r'stuck|held low','stuck bus'),(r'address','address concern'),(r'pin|wir(?:e|ing)','routing concern')] if re.search(pattern,problem,re.I)]
     addresses=[]; documented=[];nacks=[];acks=[];pins=[];circuits=[];missing=[];logs=[];clocks=[];measured_clocks=[]
     def citation(f,excerpt,**kw): return dict(file_id=f['id'],source=f['name'],excerpt=excerpt,**kw)
     for f in files:
@@ -98,5 +101,5 @@ def diagnose(files, tests=None):
         h['ranking_method']='Distinct supporting evidence sources minus contradicting sources, including explicitly attributed user test records. Not a probability.'
     hypotheses.sort(key=lambda h:(-h['evidence_balance'],h['key']))
     for i,h in enumerate(hypotheses,1):h['rank']=i
-    return dict(hypotheses=hypotheses,scope='ESP32/Arduino I2C rule-based investigation. All root causes remain hypotheses until a user records verification.',
+    return dict(applicable=True,problem=problem,symptoms=symptoms,hypotheses=hypotheses,scope='ESP32/Arduino I2C rule-based investigation. All root causes remain hypotheses until a user records verification.',
                 evidence_file_count=len(files),unknowns=['No physical hardware was accessed by BenchTrace.'],summary='Address mismatch evidence found.' if mismatch else 'No definitive address mismatch established; follow competing verification tests.')

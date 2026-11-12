@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 import sexpdata
 from pypdf import PdfReader
+from .specifications import characteristics
 
 
 def lexical_embed(text):
@@ -28,11 +29,17 @@ def document(path):
     if path.suffix.lower()=='.pdf':
         reader=PdfReader(path)
         if len(reader.pages)>300: raise ValueError('PDF exceeds 300 pages')
-        pages=[p.extract_text() or '' for p in reader.pages]
+        pages=[];total=0
+        for p in reader.pages:
+            text=p.extract_text() or '';total+=len(text)
+            if total>2_000_000:raise ValueError('Document exceeds two million extracted characters')
+            pages.append(text)
     else: pages=[path.read_text(encoding='utf-8')]
-    chunks=[];specs=[]
+    if sum(map(len,pages))>2_000_000:raise ValueError('Document exceeds two million extracted characters')
+    chunks=[];specs=[];structured=[]
     for page,text in enumerate(pages,1):
-        for offset in range(0,min(len(text),200000),1200):
+        structured.extend(characteristics(text,page))
+        for offset in range(0,len(text),1200):
             content=text[offset:offset+1400]
             if content.strip(): chunks.append(dict(page=page,content=content,embedding=embed(content)))
         # Preserve whole excerpts rather than asserting a value's electrical meaning.
@@ -40,12 +47,12 @@ def document(path):
             if re.search(r'(?i)(0x[0-9a-f]{2}|\b\d+(?:\.\d+)?\s*(?:V|kHz|MHz|ns|µs|mA)\b|SDA|SCL|I2C|UART|SPI)',line):
                 specs.append(dict(page=page,excerpt=line[:600],classification='documented excerpt; applicability unverified'))
     if not chunks: raise ValueError('No extractable text; scanned PDFs require OCR (not supported)')
-    return dict(kind='document',pages=len(pages),chunks=chunks,specifications=specs[:200],summary='\n'.join(pages[0].splitlines()[:8])[:1000],summary_method='Extractive first-page excerpt')
+    return dict(kind='document',pages=len(pages),chunks=chunks,specifications=specs[:200],characteristics=structured[:1000],extraction_limits={'specification_excerpts_truncated':len(specs)>200,'characteristics_truncated':len(structured)>1000},summary='\n'.join(pages[0].splitlines()[:8])[:1000],summary_method='Extractive first-page excerpt')
 
 
 def firmware(text):
     # Strip comments but retain line count; deliberately avoid claiming AST-level understanding.
-    clean=re.sub(r'/\*.*?\*/|//[^\n]*',lambda m:'\n'*m[0].count('\n'),text,flags=re.S)
+    clean=re.sub(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"',lambda m:''.join('\n' if c=='\n' else ' ' for c in m[0]),text,flags=re.S)
     defines=dict(re.findall(r'^\s*#define\s+(\w+)\s+(0x[\da-fA-F]+|\d+)\b',clean,re.M))
     def number(v):
         v=defines.get(v.strip(),v.strip())

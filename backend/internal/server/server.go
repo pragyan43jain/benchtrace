@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -55,6 +56,10 @@ func (s *Server) Routes() http.Handler {
 	m.Handle("GET /api/projects/{project}/investigations/{investigation}/report", s.require(s.report))
 	m.Handle("POST /api/projects/{project}/investigations/{investigation}/save", s.require(s.saveKnowledge))
 	m.Handle("GET /api/knowledge", s.require(s.knowledge))
+	m.Handle("POST /api/projects/{project}/knowledge", s.require(s.createProcedure))
+	m.Handle("GET /api/projects/{project}/components", s.require(s.components))
+	m.Handle("GET /api/projects/{project}/history", s.require(s.projectHistory))
+	m.Handle("PATCH /api/projects/{project}/preferences", s.require(s.preferences))
 	m.Handle("GET /api/events", s.require(s.events))
 	return s.middleware(m)
 }
@@ -113,18 +118,27 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 			fail(w, 403, "Origin not allowed")
 			return
 		}
-		if strings.HasPrefix(r.URL.Path, "/api/auth/") && r.Method == "POST" {
-			key := "rate:" + strings.Split(r.RemoteAddr, ":")[0] + ":" + time.Now().UTC().Format("200601021504")
-			n, e := s.Redis.Incr(r.Context(), key).Result()
-			if e != nil {
+		if r.URL.Path != "/api/health" {
+			host, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				host = r.RemoteAddr
+			}
+			limit := int64(600)
+			bucket := "api"
+			if strings.HasPrefix(r.URL.Path, "/api/auth/") && r.Method != "GET" {
+				limit = 20
+				bucket = "auth"
+			}
+			key := "rate:" + bucket + ":" + host + ":" + time.Now().UTC().Format("200601021504")
+			// Increment and expiry are atomic, including if the process dies mid-request.
+			n, err := s.Redis.Eval(r.Context(), "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],120) end; return n", []string{key}).Int64()
+			if err != nil {
 				fail(w, 503, "Rate limiter unavailable")
 				return
 			}
-			if n == 1 {
-				s.Redis.Expire(r.Context(), key, 2*time.Minute)
-			}
-			if n > 20 {
-				fail(w, 429, "Too many attempts; retry in one minute")
+			if n > limit {
+				w.Header().Set("Retry-After", "60")
+				fail(w, 429, "Request limit exceeded; retry in one minute")
 				return
 			}
 		}

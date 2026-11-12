@@ -10,9 +10,14 @@ Base path: `/api`. JSON responses except the Markdown report. Errors: `{"error":
 | POST | `/auth/logout` | Revoke current session |
 | GET | `/auth/me` | Restore session/profile |
 | PATCH | `/auth/me` | `{name,current_password,new_password}`; password change revokes all old sessions |
+| GET | `/activity` | Recent owned project file/investigation activity |
 | GET | `/config` | Safe analysis configuration; never returns provider credentials |
 | GET/POST | `/projects` | List owned projects / create `{name,description,platform}` |
 | GET/PATCH | `/projects/:p` | Project with files/investigations / update project fields |
+| PATCH | `/projects/:p/preferences` | `{threshold,baud,cpol,cpha}` defaults for future uploads |
+| GET | `/projects/:p/history` | Project change/upload history |
+| GET | `/projects/:p/components` | Source-backed imported component references |
+| POST | `/projects/:p/knowledge` | Save procedure `{title,content}` |
 | POST | `/projects/:p/files` | Multipart `file`, optional `category`; returns 202 with file IDs |
 | GET | `/projects/:p/files/:f` | Processing status and structured analysis |
 | POST | `/projects/:p/files/:f/analyze` | Requeue with `{threshold,baud,cpol,cpha}` |
@@ -21,11 +26,11 @@ Base path: `/api`. JSON responses except the Markdown report. Errors: `{"error":
 | POST | `/projects/:p/investigations` | `{problem}` |
 | GET | `/projects/:p/investigations/:i` | Hypotheses, tests and timeline |
 | PATCH | `/projects/:p/investigations/:i` | `{status,resolution}`; resolution required for resolved/closed |
-| POST | `/projects/:p/investigations/:i/diagnose` | Correlate ready files and recorded tests, persist snapshot |
+| POST | `/projects/:p/investigations/:i/diagnose` | Optional `{file_ids:[...]}` selects ready evidence; omitted selects all ready files. Correlate with recorded tests and persist snapshot |
 | POST | `/projects/:p/investigations/:i/tests` | `{hypothesis_id,observation,outcome}` |
 | GET | `/projects/:p/investigations/:i/report` | Download Markdown diagnostic report |
 | POST | `/projects/:p/investigations/:i/save` | Save a private knowledge snapshot |
-| GET | `/knowledge?q=...` | Owner-scoped semantic search; empty q lists newest |
+| GET | `/knowledge?q=...` | Owner-scoped semantic search; optional `project` and `verified=true` filters; empty q lists newest |
 | WS | `/events` | Authenticated, owner-filtered `files_changed` notifications |
 
 Test outcomes: `supports`, `confirms`, `rejects`, `inconclusive`. Confirmation means **recorded by the user**, not measured or independently verified by BenchTrace. Investigation states: `open`, `investigating`, `waiting_for_measurement`, `resolved`, `closed`.

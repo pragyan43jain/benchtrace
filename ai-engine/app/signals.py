@@ -16,10 +16,10 @@ def parse_csv(text):
     if len(set(frame.columns)) != len(frame.columns):
         raise ValueError('Duplicate channel names')
     frame = frame.apply(pd.to_numeric, errors='raise')
-    if not np.isfinite(frame.to_numpy()).all():
+    if not np.isfinite(frame.to_numpy()).all() or np.max(np.abs(frame.to_numpy()))>1e12:
         raise ValueError('Samples must be finite')
     t = frame.pop('time').to_numpy()
-    if np.any(np.diff(t) <= 0):
+    if np.any(np.diff(t) < 1e-15):
         raise ValueError('Time must be strictly increasing in seconds')
     return t, {str(k).lower(): v.to_numpy() for k, v in frame.items()}
 
@@ -34,7 +34,9 @@ def stats(t, y):
                   sampling_jitter_fraction=float(np.std(dt)/np.mean(dt)), peak_count=len(peaks),
                   noise_estimate_v=float(np.median(abs(np.diff(y)-np.median(np.diff(y))))/.67448975/np.sqrt(2)),
                   noise_method='Robust first-difference estimate; edges and correlated noise can bias it',
-                  moving_average=filtered[::max(1,len(filtered)//1000)].tolist())
+                  moving_average=filtered[::max(1,len(filtered)//1000)].tolist(),
+                  moving_average_time=(t[2:-2] if len(y)>=5 else t)[::max(1,len(filtered)//1000)].tolist(),
+                  moving_average_method='Five-sample centered mean; display filtering does not alter decoder inputs')
     if uniform:
         amplitudes = np.abs(np.fft.rfft((y-np.mean(y))*np.hanning(len(y)))) * 2/max(np.sum(np.hanning(len(y))),1)
         frequencies = np.fft.rfftfreq(len(y), float(np.median(dt)))
@@ -76,6 +78,7 @@ def decode_i2c(t, scl, sda, threshold=1.65):
                 current['bytes'].append(dict(value=value, ack=not bool(bits[8]), time=float(t[i])))
                 if len(current['bytes'])==1:
                     current.update(address=value>>1, direction='read' if value&1 else 'write')
+                    if value&0xF8==0xF0:warnings.append('10-bit address prefix detected; this decoder supports only 7-bit addresses')
                 bits=[]
     if current is not None:
         current['termination']='truncated'; frames.append(current); warnings.append('Capture ended without STOP')
@@ -89,7 +92,7 @@ def decode_i2c(t, scl, sda, threshold=1.65):
 
 def decode_uart(t, rx, baud=115200, threshold=1.65):
     if not 1 <= baud <= 10_000_000: raise ValueError('Invalid baud rate')
-    if max(np.diff(t))*baud > .125:
+    if max(np.diff(t))*baud > .125*(1+1e-9):
         return dict(frames=[],reliable=False,warnings=['Require at least 8 samples per UART bit'])
     d=digital(rx,threshold); frames=[]; until=-1
     for i in np.flatnonzero(d[:-1] & ~d[1:])+1:
@@ -100,7 +103,7 @@ def decode_uart(t, rx, baud=115200, threshold=1.65):
         if bits[0]: continue
         frames.append(dict(time=float(t[i]),value=sum(int(b)<<j for j,b in enumerate(bits[1:9])),framing_error=not bool(bits[9])))
         until=t[i]+9.5/baud
-    return dict(frames=frames,reliable=not any(f['framing_error'] for f in frames),warnings=[],format='8N1, non-inverted')
+    return dict(frames=frames,reliable=bool(frames) and not any(f['framing_error'] for f in frames),warnings=[] if frames else ['No complete UART frames found'],format='8N1, non-inverted')
 
 
 def decode_spi(t, clk, mosi, cs, cpol=0, cpha=0, threshold=1.65):
@@ -119,6 +122,7 @@ def decode_spi(t, clk, mosi, cs, cpol=0, cpha=0, threshold=1.65):
             if len(bits)==8:
                 frames.append(dict(time=float(t[i]),value=sum(b<<(7-j) for j,b in enumerate(bits))));bits=[]
     if bits: warnings.append('Truncated SPI word')
+    if not frames:warnings.append('No complete SPI words found')
     return dict(frames=frames,reliable=not warnings,warnings=warnings,format='8-bit MSB first, active-low CS, MOSI only')
 
 
@@ -126,7 +130,8 @@ def analyze_csv(text, options=None):
     options=options or {};t,channels=parse_csv(text);threshold=options.get('threshold',1.65)
     result=dict(kind='waveform',sample_count=len(t),duration=float(t[-1]-t[0]),channels={},protocols={})
     # Preserve transitions in the displayed data; cap response size explicitly.
-    indices=np.arange(len(t)) if len(t)<=10000 else np.unique(np.concatenate([np.linspace(0,len(t)-1,2000,dtype=int)]+[np.flatnonzero(np.diff(digital(y,threshold))) for y in channels.values()]))[:20000]
+    indices=np.arange(len(t)) if len(t)<=10000 else np.unique(np.concatenate([np.linspace(0,len(t)-1,2000,dtype=int)]+[np.concatenate((np.flatnonzero(np.diff(digital(y,threshold))),np.flatnonzero(np.diff(digital(y,threshold)))+1)) for y in channels.values()]))
+    if len(indices)>20000: indices=indices[np.linspace(0,len(indices)-1,20000,dtype=int)]
     result['preview_truncated']=len(indices)<len(t)
     result['time']=t[indices].tolist()
     for name,y in channels.items():

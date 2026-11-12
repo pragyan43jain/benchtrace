@@ -18,3 +18,13 @@ def test_fixed_diagnostic_scenarios(case):
         for e in h['supporting_evidence']+h['contradictory_evidence']:
             assert e['file_id'] in ('fw','doc')
             assert e['excerpt'] in case['firmware'] or e['excerpt'] in case['document'] or e['excerpt'].startswith('No Wire.begin')
+
+def test_problem_scope_does_not_invent_i2c_fault_for_spi():
+    r=diagnose([],problem='SPI sensor reads incorrect data')
+    assert r['applicable'] is False and not r['hypotheses']
+
+def test_reported_symptoms_are_preserved_without_measurement_claim():
+    r=diagnose([],problem='I2C sensor times out and returns NACK at address 0x48')
+    assert 'missing acknowledgement' in r['symptoms']
+    assert 'address concern' in r['symptoms']
+    assert all(not h['supporting_evidence'] for h in r['hypotheses'])

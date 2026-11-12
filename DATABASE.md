@@ -1,6 +1,6 @@
 # Database
 
-PostgreSQL 17 with pgvector. `backend/migrations/001_init.sql` is the idempotent initial schema, applied at startup. Future schema changes should use versioned migrations with an explicit migration ledger before rolling multi-instance deployment.
+PostgreSQL 17 with pgvector. SQL files in `backend/migrations/` are embedded into the Go binary and applied in filename order inside an advisory-locked transaction. `schema_migrations` records a SHA-256 checksum and application time. Changing an already-applied migration fails startup; add a new numbered migration instead. The initial migration is idempotent so existing development databases can adopt the ledger.
 
 | Tables | Responsibility |
 |---|---|
@@ -14,6 +14,7 @@ PostgreSQL 17 with pgvector. `backend/migrations/001_init.sql` is the idempotent
 | measurement_files, measurement_results | Waveform metadata and successive analysis results |
 | components | Extracted component properties, references and file provenance |
 | knowledge_entries | Private project-linked report snapshots and semantic embeddings |
+| project_events, schema_migrations | Project changes and checksum-verified migration history |
 | background_jobs | Durable queue state, attempt counter, errors and recovery timestamps |
 
 All IDs are generated UUIDv4. Foreign keys cascade where records cannot exist without their parent. Owner/project lookups, session expiry, queue state and document joins are indexed. Initial vector search is exact cosine distance, appropriate for bounded projects; add and evaluate approximate indexes only when corpus size justifies them. Large source binaries remain in the upload volume.

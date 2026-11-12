@@ -2,6 +2,7 @@ package server
 
 import (
 	"benchtrace/internal/auth"
+	"encoding/json"
 	"net/http"
 	"strings"
 )
@@ -51,8 +52,21 @@ func (s *Server) updateProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Invalid project fields")
 		return
 	}
-	_, e := s.DB.Exec(r.Context(), "UPDATE projects SET name=$1,description=$2,platform=$3,updated_at=now() WHERE id=$4", p.Name, p.Description, p.Platform, r.PathValue("project"))
-	if !dbError(w, e) {
+	tx, e := s.DB.Begin(r.Context())
+	if dbError(w, e) {
+		return
+	}
+	defer tx.Rollback(r.Context())
+	_, e = tx.Exec(r.Context(), "UPDATE projects SET name=$1,description=$2,platform=$3,updated_at=now() WHERE id=$4", p.Name, p.Description, p.Platform, r.PathValue("project"))
+	if dbError(w, e) {
+		return
+	}
+	raw, _ := json.Marshal(p)
+	_, e = tx.Exec(r.Context(), "INSERT INTO project_events(id,project_id,actor_id,kind,detail) VALUES($1,$2,$3,'project_updated',$4)", auth.ID(), r.PathValue("project"), user(r), raw)
+	if dbError(w, e) {
+		return
+	}
+	if !dbError(w, tx.Commit(r.Context())) {
 		respond(w, 200, map[string]bool{"ok": true})
 	}
 }
