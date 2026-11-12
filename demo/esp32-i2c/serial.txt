@@ -1,0 +1,3 @@
+SIMULATED serial output
+Sensor transaction failed
+Wire.endTransmission result: 2 (address NACK in this simulation)

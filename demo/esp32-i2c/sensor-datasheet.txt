@@ -1,0 +1,8 @@
+SIMULATED SENSOR MODEL — NOT A MANUFACTURER DATASHEET
+BenchTrace reproducible demonstration model, revision 1.
+This fictional I2C peripheral exists only in the fixture generator.
+I2C address: 0x48 (7-bit, fixed for this simulation).
+Simulation assumptions: 3.3 V logic, ideal transitions, 100 kHz SCL.
+SDA and SCL are open-drain in the conceptual model; this digital fixture
+cannot establish analog rise times, actual resistance, or supply integrity.
+This document is NOT a specification for any physical sensor.

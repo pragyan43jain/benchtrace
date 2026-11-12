@@ -1,0 +1,13 @@
+{
+  "simulated": true,
+  "sample_rate_hz": 2000000,
+  "clock_hz": 100000,
+  "logic_high_v": 3.3,
+  "fault": "firmware address 0x49 instead of model address 0x48",
+  "known_limits": [
+    "ideal edges",
+    "no analog noise",
+    "no physical sensor",
+    "no electrical compliance claim"
+  ]
+}

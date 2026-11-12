@@ -1,0 +1,41 @@
+import os
+import secrets
+from pathlib import Path
+from fastapi import FastAPI, Header, HTTPException, Depends
+from pydantic import BaseModel, Field
+from .evidence import process,embed
+from .diagnostics import diagnose
+app=FastAPI(title='BenchTrace engineering engine',version='0.1.0')
+
+def authorize(authorization: str=Header(default='')):
+    token=os.environ.get('ENGINE_TOKEN','')
+    if not token or not secrets.compare_digest(authorization,'Bearer '+token): raise HTTPException(401,'Unauthorized')
+
+class ProcessRequest(BaseModel):
+    storage_key: str=Field(pattern=r'^[a-f0-9-]{36}\.[a-z_]+$',max_length=60)
+    options: dict=Field(default_factory=dict)
+class DiagnosticRequest(BaseModel):
+    files:list[dict]=Field(max_length=200)
+class EmbedRequest(BaseModel):
+    text:str=Field(max_length=20000)
+
+@app.get('/health')
+def health():return {'status':'ok'}
+@app.post('/process',dependencies=[Depends(authorize)])
+def analyze(request:ProcessRequest):
+    try:return process(Path('/uploads')/request.storage_key,request.options)
+    except (ValueError,UnicodeError,OSError,KeyError) as e:raise HTTPException(422,str(e)[:500]) from e
+@app.post('/diagnose',dependencies=[Depends(authorize)])
+def diagnostic(request:DiagnosticRequest):return diagnose(request.files)
+@app.post('/embed',dependencies=[Depends(authorize)])
+def embedding(request:EmbedRequest):return {'embedding':embed(request.text),'method':os.getenv('EMBEDDING_MODE','semantic')}
+
+class AnswerRequest(BaseModel):
+    question:str=Field(max_length=2000)
+    evidence:list[dict]=Field(max_length=6)
+@app.post('/answer',dependencies=[Depends(authorize)])
+def generate_answer(request:AnswerRequest):
+    from .answers import answer
+    return answer(request.question,request.evidence)
+@app.get('/config',dependencies=[Depends(authorize)])
+def config():return {'embedding_mode':os.getenv('EMBEDDING_MODE','semantic'),'model':'BAAI/bge-small-en-v1.5','provider_configured':bool(os.getenv('LLM_BASE_URL')),'diagnostics':'deterministic evidence rules','decoder_defaults':{'threshold':1.65,'baud':115200,'cpol':0,'cpha':0}}
