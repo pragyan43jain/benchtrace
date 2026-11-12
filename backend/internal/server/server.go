@@ -4,13 +4,11 @@ import (
 	"benchtrace/internal/auth"
 	"context"
 	"encoding/json"
-	"errors"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"io"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -37,13 +35,18 @@ func (s *Server) Routes() http.Handler {
 	m.HandleFunc("POST /api/auth/login", s.login)
 	m.Handle("POST /api/auth/logout", s.require(s.logout))
 	m.Handle("GET /api/auth/me", s.require(s.me))
+	m.Handle("PATCH /api/auth/me", s.require(s.profile))
+	m.Handle("GET /api/config", s.require(s.configuration))
 	m.Handle("GET /api/projects", s.require(s.projects))
+	m.Handle("GET /api/activity", s.require(s.activity))
 	m.Handle("POST /api/projects", s.require(s.createProject))
 	m.Handle("GET /api/projects/{project}", s.require(s.project))
 	m.Handle("PATCH /api/projects/{project}", s.require(s.updateProject))
 	m.Handle("POST /api/projects/{project}/files", s.require(s.upload))
 	m.Handle("GET /api/projects/{project}/files/{file}", s.require(s.file))
 	m.Handle("POST /api/projects/{project}/search", s.require(s.search))
+	m.Handle("POST /api/projects/{project}/files/{file}/analyze", s.require(s.reanalyze))
+	m.Handle("POST /api/projects/{project}/compare", s.require(s.compare))
 	m.Handle("POST /api/projects/{project}/investigations", s.require(s.createInvestigation))
 	m.Handle("GET /api/projects/{project}/investigations/{investigation}", s.require(s.investigation))
 	m.Handle("PATCH /api/projects/{project}/investigations/{investigation}", s.require(s.updateInvestigation))
@@ -72,7 +75,7 @@ func decode(w http.ResponseWriter, r *http.Request, v any) bool {
 		return false
 	}
 	var extra any
-	if d.Decode(&extra) == nil {
+	if d.Decode(&extra) != io.EOF {
 		fail(w, 400, "Multiple JSON values")
 		return false
 	}
@@ -180,7 +183,3 @@ func dbError(w http.ResponseWriter, e error) bool {
 	}
 	return false
 }
-
-var _ = errors.Is
-var _ = pgx.ErrNoRows
-var _ = os.Getenv

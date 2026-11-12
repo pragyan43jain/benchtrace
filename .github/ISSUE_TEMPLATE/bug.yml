@@ -1,0 +1,17 @@
+name: Engineering or software defect
+description: Report a reproducible failure or unsupported diagnostic claim
+body:
+  - type: textarea
+    attributes:
+      label: Observed versus expected behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction and evidence
+      description: Mark simulated data; remove credentials and proprietary information.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Version, platform and logs

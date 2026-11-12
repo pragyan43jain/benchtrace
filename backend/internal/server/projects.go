@@ -75,3 +75,10 @@ func (s *Server) project(w http.ResponseWriter, r *http.Request) {
 	}
 	respond(w, 200, map[string]any{"project": p[0], "files": files, "investigations": inv})
 }
+
+func (s *Server) activity(w http.ResponseWriter, r *http.Request) {
+	rows, e := s.query(r, `SELECT row_to_json(a) FROM (SELECT i.id,i.project_id,p.name AS project,i.problem AS title,i.status,'investigation' AS kind,i.updated_at AS occurred_at FROM investigations i JOIN projects p ON p.id=i.project_id WHERE p.owner_id=$1 UNION ALL SELECT f.id,f.project_id,p.name,f.name,f.status,'file',f.created_at FROM project_files f JOIN projects p ON p.id=f.project_id WHERE p.owner_id=$1 ORDER BY occurred_at DESC LIMIT 20) a`, user(r))
+	if !dbError(w, e) {
+		respond(w, 200, rows)
+	}
+}

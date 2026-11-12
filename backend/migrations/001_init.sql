@@ -22,3 +22,4 @@ CREATE TABLE IF NOT EXISTS knowledge_entries(id uuid PRIMARY KEY, project_id uui
 CREATE TABLE IF NOT EXISTS background_jobs(id uuid PRIMARY KEY, file_id uuid NOT NULL REFERENCES project_files ON DELETE CASCADE, status text NOT NULL DEFAULT 'queued', attempts int NOT NULL DEFAULT 0, error text NOT NULL DEFAULT '', updated_at timestamptz NOT NULL DEFAULT now());
 CREATE INDEX IF NOT EXISTS jobs_status ON background_jobs(status,updated_at);
 CREATE TABLE IF NOT EXISTS investigation_events(id uuid PRIMARY KEY, investigation_id uuid NOT NULL REFERENCES investigations ON DELETE CASCADE, kind text NOT NULL, detail jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE project_files ADD COLUMN IF NOT EXISTS options jsonb NOT NULL DEFAULT '{}';

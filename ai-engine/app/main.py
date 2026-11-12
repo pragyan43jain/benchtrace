@@ -16,6 +16,7 @@ class ProcessRequest(BaseModel):
     options: dict=Field(default_factory=dict)
 class DiagnosticRequest(BaseModel):
     files:list[dict]=Field(max_length=200)
+    tests:list[dict]=Field(default_factory=list,max_length=1000)
 class EmbedRequest(BaseModel):
     text:str=Field(max_length=20000)
 
@@ -26,7 +27,7 @@ def analyze(request:ProcessRequest):
     try:return process(Path('/uploads')/request.storage_key,request.options)
     except (ValueError,UnicodeError,OSError,KeyError) as e:raise HTTPException(422,str(e)[:500]) from e
 @app.post('/diagnose',dependencies=[Depends(authorize)])
-def diagnostic(request:DiagnosticRequest):return diagnose(request.files)
+def diagnostic(request:DiagnosticRequest):return diagnose(request.files,request.tests)
 @app.post('/embed',dependencies=[Depends(authorize)])
 def embedding(request:EmbedRequest):return {'embedding':embed(request.text),'method':os.getenv('EMBEDDING_MODE','semantic')}
 
@@ -37,5 +38,15 @@ class AnswerRequest(BaseModel):
 def generate_answer(request:AnswerRequest):
     from .answers import answer
     return answer(request.question,request.evidence)
-@app.get('/config',dependencies=[Depends(authorize)])
+@app.post('/config',dependencies=[Depends(authorize)])
 def config():return {'embedding_mode':os.getenv('EMBEDDING_MODE','semantic'),'model':'BAAI/bge-small-en-v1.5','provider_configured':bool(os.getenv('LLM_BASE_URL')),'diagnostics':'deterministic evidence rules','decoder_defaults':{'threshold':1.65,'baud':115200,'cpol':0,'cpha':0}}
+
+class CompareRequest(BaseModel):
+    left:str=Field(pattern=r'^[a-f0-9-]{36}\.csv$')
+    right:str=Field(pattern=r'^[a-f0-9-]{36}\.csv$')
+    channel:str=Field(max_length=100)
+@app.post('/compare',dependencies=[Depends(authorize)])
+def compare(request:CompareRequest):
+    from .signals import compare_csv
+    try:return compare_csv((Path('/uploads')/request.left).read_text(),(Path('/uploads')/request.right).read_text(),request.channel)
+    except (ValueError,OSError) as e:raise HTTPException(422,str(e)) from e

@@ -40,3 +40,24 @@ func TestZip(t *testing.T) {
 		t.Fatal(e)
 	}
 }
+
+func TestZipDuplicateFlattenedNames(t *testing.T) {
+	var b bytes.Buffer
+	w := zip.NewWriter(&b)
+	for _, name := range []string{"a/main.c", "b/main.c"} {
+		f, _ := w.Create(name)
+		f.Write([]byte("void f(){}"))
+	}
+	w.Close()
+	if _, e := Unpack("a.zip", b.Bytes()); e == nil {
+		t.Fatal("duplicate flattened names accepted")
+	}
+}
+func TestOversizeAndBinary(t *testing.T) {
+	if Validate("a.txt", make([]byte, MaxFile+1)) == nil {
+		t.Fatal("size limit")
+	}
+	if Validate("a.txt", []byte{255, 254, 0}) == nil {
+		t.Fatal("binary text accepted")
+	}
+}

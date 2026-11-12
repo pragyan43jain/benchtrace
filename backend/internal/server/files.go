@@ -145,14 +145,28 @@ func (s *Server) Worker(ctx context.Context) {
 			slog.Error("queue recovery", "error", e)
 			continue
 		}
+		_, e = s.DB.Exec(ctx, "UPDATE background_jobs SET status='failed',error='Recovery attempt limit reached' WHERE status='queued' AND attempts>=3")
+		if e != nil {
+			slog.Error("queue attempt limit", "error", e)
+			continue
+		}
+		_, e = s.DB.Exec(ctx, "UPDATE project_files f SET status='failed',error=j.error FROM background_jobs j WHERE j.file_id=f.id AND j.status='failed' AND f.status='processing'")
+		if e != nil {
+			slog.Error("queue file recovery", "error", e)
+			continue
+		}
 		var id, file, key string
 		e = s.DB.QueryRow(ctx, `WITH job AS (SELECT id FROM background_jobs WHERE status='queued' AND attempts<3 ORDER BY updated_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE background_jobs j SET status='processing',attempts=attempts+1,updated_at=now() FROM job WHERE j.id=job.id RETURNING j.id,j.file_id,(SELECT storage_key FROM project_files WHERE id=j.file_id)`).Scan(&id, &file, &key)
 		if e != nil {
 			continue
 		}
 		s.DB.Exec(ctx, "UPDATE project_files SET status='processing' WHERE id=$1", file)
+		var options map[string]any
+		var optionsRaw []byte
+		s.DB.QueryRow(ctx, "SELECT options FROM project_files WHERE id=$1", file).Scan(&optionsRaw)
+		json.Unmarshal(optionsRaw, &options)
 		var result map[string]any
-		e = s.engine(ctx, "/process", map[string]string{"storage_key": key}, &result)
+		e = s.engine(ctx, "/process", map[string]any{"storage_key": key, "options": options}, &result)
 		if e == nil {
 			e = s.storeAnalysis(ctx, file, id, result)
 		}

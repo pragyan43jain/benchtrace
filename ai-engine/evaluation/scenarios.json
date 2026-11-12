@@ -1,0 +1,8 @@
+[
+ {"name":"wrong_address","firmware":"Wire.begin(21,22); Wire.beginTransmission(0x49);","document":"7-bit I2C address: 0x48","expected_first":"address","expected_contradiction":false},
+ {"name":"matching_address","firmware":"Wire.begin(21,22); Wire.beginTransmission(0x48);","document":"7-bit I2C address: 0x48","expected_first":null,"expected_contradiction":true},
+ {"name":"multiple_valid_addresses","firmware":"Wire.begin(21,22); Wire.beginTransmission(0x49);","document":"7-bit I2C address: 0x48 or 0x49 depending on A0 strap","expected_first":null,"expected_contradiction":true},
+ {"name":"unknown_address_macro","firmware":"Wire.begin(21,22); Wire.beginTransmission(runtimeAddress);","document":"7-bit I2C address: 0x48","expected_first":null,"expected_contradiction":false},
+ {"name":"eight_bit_address_not_comparable","firmware":"Wire.begin(21,22); Wire.beginTransmission(0x48);","document":"I2C address: 0x90 (8-bit write byte)","expected_first":null,"expected_contradiction":false},
+ {"name":"missing_initialization","firmware":"Wire.beginTransmission(0x49);","document":"Operating temperature range is documented separately.","expected_first":"pins","expected_contradiction":false}
+]

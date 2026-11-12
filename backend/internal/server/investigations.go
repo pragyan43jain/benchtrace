@@ -111,7 +111,11 @@ func (s *Server) diagnose(w http.ResponseWriter, r *http.Request) {
 		Hypotheses []map[string]any `json:"hypotheses"`
 		Summary    string           `json:"summary"`
 	}
-	if e = s.engine(r.Context(), "/diagnose", map[string]any{"files": files}, &result); e != nil {
+	tests, err := s.query(r, "SELECT json_build_object('id',t.id,'rule_key',h.rule_key,'observation',t.observation,'outcome',t.outcome) FROM diagnostic_tests t JOIN diagnostic_hypotheses h ON h.id=t.hypothesis_id WHERE h.investigation_id::text=$1 ORDER BY t.created_at DESC LIMIT 1000", r.PathValue("investigation"))
+	if dbError(w, err) {
+		return
+	}
+	if e = s.engine(r.Context(), "/diagnose", map[string]any{"files": files, "tests": tests}, &result); e != nil {
 		fail(w, 502, "Diagnostic engine unavailable")
 		return
 	}

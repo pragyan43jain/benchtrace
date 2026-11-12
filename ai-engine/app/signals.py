@@ -1,11 +1,15 @@
 """Bounded sampled-signal analysis. Times are seconds; amplitudes are volts."""
 import io
+import csv
 import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
 
 
 def parse_csv(text):
+    headers=next(csv.reader(io.StringIO(text)),[])
+    if len(headers)!=len(set(h.lower() for h in headers)):
+        raise ValueError('Duplicate channel names')
     frame = pd.read_csv(io.StringIO(text))
     if 'time' not in frame or not 3 <= len(frame) <= 200_000 or not 2 <= len(frame.columns) <= 17:
         raise ValueError('CSV requires time and 1–16 channels, 3–200000 samples')
@@ -75,6 +79,8 @@ def decode_i2c(t, scl, sda, threshold=1.65):
                 bits=[]
     if current is not None:
         current['termination']='truncated'; frames.append(current); warnings.append('Capture ended without STOP')
+    if not frames: warnings.append('No complete START-address transaction found')
+    if any(not f.get('bytes') for f in frames): warnings.append('Transaction has no complete address byte')
     periods = np.diff(t[np.flatnonzero(~c[:-1] & c[1:])+1])
     return dict(frames=frames, reliable=not warnings, warnings=list(dict.fromkeys(warnings)),
                 clock_hz=float(1/np.median(periods)) if len(periods) else None,
@@ -129,3 +135,12 @@ def analyze_csv(text, options=None):
     if 'rx' in channels: result['protocols']['uart']=decode_uart(t,channels['rx'],options.get('baud',115200),threshold)
     if {'clk','mosi','cs'} <= channels.keys(): result['protocols']['spi']=decode_spi(t,channels['clk'],channels['mosi'],channels['cs'],options.get('cpol',0),options.get('cpha',0),threshold)
     return result
+
+
+def compare_csv(left,right,channel):
+    lt,lc=parse_csv(left);rt,rc=parse_csv(right)
+    if channel not in lc or channel not in rc:raise ValueError('Channel missing')
+    start=max(lt[0],rt[0]);end=min(lt[-1],rt[-1]);mask=(lt>=start)&(lt<=end)
+    if mask.sum()<3:raise ValueError('Insufficient overlapping time range')
+    x=lc[channel][mask];y=np.interp(lt[mask],rt,rc[channel]);delta=x-y
+    return dict(channel=channel,samples=int(mask.sum()),start=float(start),end=float(end),rmse_v=float(np.sqrt(np.mean(delta**2))),max_difference_v=float(np.max(abs(delta))),mean_difference_v=float(np.mean(delta)),method='Absolute timestamp alignment; right capture linearly interpolated to left. No inferred trigger alignment.')

@@ -28,3 +28,11 @@ Created `backend/` (schema, sessions, ownership, storage, durable jobs, investig
 Executed: `go test ./...` passed for auth/storage; initial Python suite **18 passed** after correcting I2C STOP-boundary handling. Frontend initial build caught an unavailable icon export (fixed); npm audit found old tooling vulnerabilities (upgrades underway).
 
 Remaining verification: full container startup, API integration, browser workflows, semantic model download and retrieval evaluation, dependency/security audits, deployment and CI. No completion claim for unverified endpoints.
+
+## Milestone 2 — integrated local investigation
+
+Added semantic BGE/pgvector retrieval, constrained extractive RAG, configurable protocol decoding, waveform comparison, circuit net visualization, profile/password updates, knowledge retrieval, CI definitions, integration/browser tests and required documentation.
+
+Executed against the running Compose stack: **API integration passed** for registration/login/logout, CSRF rejection, project management, second-account isolation, ZIP ingestion, background processing, waveform decoding, document retrieval, diagnosis, persisted test outcomes across reruns, report generation and private knowledge storage. Engine evaluation: **30 passed** before the additional circuit-correlation test. Frontend: production build and **2 unit tests passed**. npm audit: **0 vulnerabilities**.
+
+Open gates: browser E2E, final rebuilt images, Go/Python dependency remediation and rescan, GitHub CI execution, final documentation/screenshots. Earlier Go/Python audits detected vulnerable initial pins; upgrades are in progress. Public hosting and physical hardware validation are not claimed.
