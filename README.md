@@ -4,7 +4,7 @@
 
 BenchTrace is an open-source investigation workspace for hardware and embedded firmware failures. It connects source code, circuit connectivity, component documentation, and measured signals so an engineer can evaluate competing causes and choose a verification test.
 
-**Development release — not yet declared production-complete.** See the [requirement audit](docs/REQUIREMENTS.md) and [executed milestones](ROADMAP.md). The initial supported diagnostic workflow targets ESP32/Arduino I2C failures. The current [v0.1.5-rc.1 GitHub release](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.5-rc.1) includes account-scoped provider credentials, verification results and scope boundaries.
+**Development release — not yet declared production-complete.** See the [requirement audit](docs/REQUIREMENTS.md) and [executed milestones](ROADMAP.md). The initial supported diagnostic workflow targets ESP32/Arduino I2C failures. The current [v0.1.6-rc.1 GitHub release](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.6-rc.1) adds bounded OCR for scanned PDFs and discloses its six-page, English-only limit.
 
 ## What it does
 
@@ -57,11 +57,11 @@ Open **http://localhost:8080**, create an account, and create a project. The set
 
 Only the web service is published, on loopback. For a public deployment, configure HTTPS termination, the exact `APP_ORIGIN`, `COOKIE_SECURE=true`, backups and operational monitoring. Read [SECURITY.md](SECURITY.md). No public production instance is claimed.
 
-To run a published release candidate instead of building from source, use Docker Compose V2 with support for the `!reset` merge tag, set `BENCHTRACE_VERSION` to a published tag (currently `v0.1.5-rc.1`), and use the published-image overlay:
+To run a published release candidate instead of building from source, use Docker Compose V2 with support for the `!reset` merge tag, set `BENCHTRACE_VERSION` to a published tag (currently `v0.1.6-rc.1`), and use the published-image overlay:
 
 ```sh
-BENCHTRACE_VERSION=v0.1.5-rc.1 docker compose -f compose.yaml -f compose.published.yaml pull
-BENCHTRACE_VERSION=v0.1.5-rc.1 docker compose -f compose.yaml -f compose.published.yaml up -d
+BENCHTRACE_VERSION=v0.1.6-rc.1 docker compose -f compose.yaml -f compose.published.yaml pull
+BENCHTRACE_VERSION=v0.1.6-rc.1 docker compose -f compose.yaml -f compose.published.yaml up -d
 ```
 
 ## Reproduce the ESP32 I2C failure
