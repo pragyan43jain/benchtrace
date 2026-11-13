@@ -805,6 +805,7 @@ blockquote p {
 }
 table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 12px;
 }
@@ -813,6 +814,7 @@ td {
   text-align: left;
   border-bottom: 1px solid #293142;
   padding: 10px;
+  overflow-wrap: anywhere;
 }
 th {
   color: #7c94b3;

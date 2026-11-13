@@ -8,7 +8,7 @@ No production-completeness claim is made until all required checks pass.
 | 1 Foundation | Implemented; regression verification underway | Sessions, owner isolation, projects, versioned migrations, React workspace |
 | 2 Documents | Implemented supported subset | PDF/text extraction, structured explicit characteristics, local semantic retrieval, cited answers |
 | 3 Signals | Implemented supported subset | Validated CSV, numerical analysis, bounded I2C/UART/SPI, waveform controls and comparison |
-| 4 Engineering intelligence | Partially implemented | Bounded firmware patterns and KiCad netlist graph; further static-analysis edge cases remain |
+| 4 Engineering intelligence | Partially implemented | Bounded firmware patterns, KiCad netlist graph, visible schematic pin metadata; broader static-analysis and schematic geometry remain |
 | 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, five competing rule families, traceable tests and ranking |
 | 6 Product workflow | Implemented; browser regression underway | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events |
 | 7 Production quality | In progress | Security checks and local deployment pass; full CI run 43376992920 passes; product audit items remain |
@@ -67,3 +67,7 @@ Recording a user test now immediately reruns the diagnosis using the selected ev
 ## Milestone 7 — KiCad symbol pin metadata
 
 Extended `.kicad_sch` extraction to read embedded library symbol pin numbers, names, and declared electrical pin types for recognized component symbols. This metadata is explicitly not treated as net connectivity; exported `.net` remains the source for reliable pin-to-net relationships. Added the simulated sensor-symbol fixture and wired it into the API integration suite, which now verifies stored pin metadata through the component endpoint. Verification: engine suite **59 passed** (one upstream Starlette/httpx deprecation warning); rebuilt engine/API integration and security integration both passed. Full CI run **43376992920 passed** across Go, frontend, engine, API/security, and browser workflows. Local browser suite **4 passed** and refreshed the workspace screenshots. Earlier run 43376592983 exposed one stale scope-wording assertion; the test was corrected and the subsequent full run is green. A direct host Python test attempt failed during collection because the host interpreter lacks the engine package; passing tests used the pinned Compose engine environment.
+
+## Milestone 8 — visible KiCad pin evidence
+
+Added declared pin metadata to both the uploaded schematic evidence view and the project component browser. The views distinguish symbol pin metadata from net connectivity, and the component table now wraps long pin lists on mobile. Expanded the complete browser workflow to upload the simulated KiCad symbol file, verify extracted pin evidence, and browse the same component at project scope. Verification: frontend build and **2 unit tests passed**; browser suite **4 passed** after an initial run exposed a stale toast assertion and a mobile table overflow, both corrected. The tests also refreshed desktop and mobile screenshots. CI for this milestone is pending.

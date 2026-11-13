@@ -113,6 +113,7 @@ export function Knowledge({
                 <tr>
                   <th>Reference</th>
                   <th>Value</th>
+                  <th>Declared pins</th>
                   <th>Source</th>
                 </tr>
               </thead>
@@ -121,6 +122,16 @@ export function Knowledge({
                   <tr key={c.id}>
                     <td>{c.reference}</td>
                     <td>{c.properties.value}</td>
+                    <td>
+                      {c.properties.pins?.length
+                        ? c.properties.pins
+                            .map(
+                              (pin: any) =>
+                                `${pin.number} · ${pin.name} (${pin.electrical_type})`,
+                            )
+                            .join(", ")
+                        : "No embedded pin metadata"}
+                    </td>
                     <td>{c.source}</td>
                   </tr>
                 ))}

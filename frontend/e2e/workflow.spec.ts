@@ -56,6 +56,22 @@ test("complete engineering investigation in the browser", async ({ page }) => {
       .locator(".file-list button")
       .filter({ hasText: "sensor-datasheet.txt" }),
   ).toContainText("ready", { timeout: 120000 });
+  await page.getByLabel("Evidence category").selectOption("schematic");
+  await page
+    .getByLabel("Evidence file")
+    .setInputFiles(path.join(demo, "sensor-symbols.kicad_sch"));
+  await page.getByRole("button", { name: "Upload evidence" }).click();
+  await expect(
+    page.getByText("Evidence uploaded. Processing has started."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  const schematic = page
+    .locator(".file-list button")
+    .filter({ hasText: "sensor-symbols.kicad_sch" });
+  await expect(schematic).toContainText("ready", { timeout: 120000 });
+  await schematic.click();
+  await expect(page.getByText("1 · SDA (input)", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Pin connectivity is not inferred/)).toBeVisible();
   await page
     .locator(".file-list button")
     .filter({ hasText: "failure.csv" })
@@ -88,7 +104,6 @@ test("complete engineering investigation in the browser", async ({ page }) => {
   await expect(page.locator(".hypothesis").first()).toContainText(
     "sensor-datasheet.txt",
   );
-  await page.getByRole("button", { name: "Dismiss notification" }).click();
   await page.screenshot({
     path: "../docs/diagnostic-workspace.png",
     fullPage: false,
@@ -123,6 +138,13 @@ test("complete engineering investigation in the browser", async ({ page }) => {
       { exact: true },
     ),
   ).toBeVisible();
+  await page
+    .getByLabel("Project scope")
+    .selectOption({ label: "ESP32 / Simulated sensor failure" });
+  await page.getByRole("button", { name: "Browse components" }).click();
+  await expect(
+    page.getByRole("row").filter({ hasText: "U3" }),
+  ).toContainText("1 · SDA (input)");
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 390);
   await page.screenshot({

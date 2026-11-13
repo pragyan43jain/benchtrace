@@ -31,6 +31,7 @@ export function Evidence({ analysis: a }: { analysis: any }) {
               <tr>
                 <th>Reference</th>
                 <th>Value</th>
+                <th>Declared pins</th>
               </tr>
             </thead>
             <tbody>
@@ -38,6 +39,19 @@ export function Evidence({ analysis: a }: { analysis: any }) {
                 <tr key={c.reference}>
                   <td>{c.reference}</td>
                   <td>{c.value}</td>
+                  <td>
+                    {c.pins?.length ? (
+                      <div className="row">
+                        {c.pins.map((pin: any, i: number) => (
+                          <span className="badge" key={i}>
+                            {pin.number} · {pin.name} ({pin.electrical_type})
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="muted">No embedded pin metadata</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
