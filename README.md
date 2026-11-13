@@ -11,7 +11,7 @@ BenchTrace is an open-source investigation workspace for hardware and embedded f
 - Keeps private projects, files, investigations, observations and reports in a persistent workspace.
 - Extracts PDF/text evidence with page references and searches it using a local semantic embedding model and pgvector.
 - Analyzes sampled CSV waveforms: voltage statistics, sampling quality, FFT, noise estimates and bounded I2C/UART/SPI decoding.
-- Finds recognizable Arduino firmware configuration and imports KiCad netlist connectivity.
+- Finds recognizable Arduino firmware configuration and imports KiCad netlist connectivity plus embedded schematic pin metadata.
 - Ranks competing hypotheses using a documented evidence rule, with supporting sources, contradictions, unknowns and confirm/reject experiments.
 - Records user-performed tests, preserves investigation history, exports Markdown reports and saves reusable knowledge.
 
@@ -79,7 +79,7 @@ The sensor model, bus capture and serial output are fictional, reproducible fixt
 | CSV | `time` in seconds, finite numeric channel values in volts, strictly increasing samples |
 | C/C++/INO/H/HPP | Bounded Arduino static configuration analysis; no compilation/execution |
 | KiCad `.net` | Exported S-expression components, pins and net connectivity |
-| KiCad `.kicad_sch` | Top-level component properties and net labels; no inferred wire geometry |
+| KiCad `.kicad_sch` | Component properties, embedded pin number/name/type metadata and net labels; no inferred wire geometry or pin connectivity |
 | ZIP | Safe bounded import of supported files; no nested archives or links |
 
 CSV channel names: `scl,sda` for I2C; `rx` for UART; `clk,mosi,cs` for SPI. Threshold, UART baud, CPOL and CPHA are configurable. Decoders report sampling limitations. Initial modes are seven-bit I2C, non-inverted UART 8N1, and active-low-CS/MSB-first/eight-bit SPI MOSI.
