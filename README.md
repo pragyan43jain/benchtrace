@@ -57,6 +57,13 @@ Open **http://localhost:8080**, create an account, and create a project. The set
 
 Only the web service is published, on loopback. For a public deployment, configure HTTPS termination, the exact `APP_ORIGIN`, `COOKIE_SECURE=true`, backups and operational monitoring. Read [SECURITY.md](SECURITY.md). No public production instance is claimed.
 
+To run a published release candidate instead of building from source, use Docker Compose V2 with support for the `!reset` merge tag, set `BENCHTRACE_VERSION` to a published tag (currently `v0.1.2-rc.1`), and use the published-image overlay:
+
+```sh
+BENCHTRACE_VERSION=v0.1.2-rc.1 docker compose -f compose.yaml -f compose.published.yaml pull
+BENCHTRACE_VERSION=v0.1.2-rc.1 docker compose -f compose.yaml -f compose.published.yaml up -d
+```
+
 ## Reproduce the ESP32 I2C failure
 
 ```sh

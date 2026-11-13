@@ -121,3 +121,10 @@ Corrected the pin-consistency hypothesis to cite extracted circuit evidence by s
 ## Milestone 18 — source-attribution CI
 
 Full workflow **43388763329** passed on `67cbaf1`: Go race/vet, frontend build/unit tests/audit, Docker build, all 68 engine tests, API/security integration, and four Playwright tests. Only upstream GitHub Action/runner deprecation notices were emitted.
+
+
+## Milestone 19 — deployment from published images
+
+Added `compose.published.yaml` to replace local `build` entries with versioned GHCR images while reusing the same health checks, networks, storage, secrets and resource limits. Added `BENCHTRACE_PORT` so isolated deployments can use a separate loopback port. Compose config validation confirms all three services resolve to `v0.1.2-rc.1` images with no build contexts.
+
+Pulled all services and dependencies, started an isolated published-image stack on port 8081, and verified API health, API integration, negative security integration, and all **4 Playwright tests** against those published containers. The stack was stopped and its test volumes removed. This verifies local deployment from registry images; it is not public cloud hosting. The CI workflow now checks the overlay; its run is pending.

@@ -42,6 +42,7 @@ Semantic vectors are 384-dimensional BGE-small English embeddings, produced loca
 
 - [NXP I2C specification](https://cache.nxp.com/docs/en/user-guide/UM10204.pdf): data validity, START/STOP and ACK structure. Sampling checks are BenchTrace heuristics, not a compliance certification.
 - [KiCad schematic file format](https://dev-docs.kicad.org/en/file-formats/sexpr-schematic/) and [S-expression coordinates](https://dev-docs.kicad.org/en/file-formats/sexpr-intro/): symbol pins, wire points, labels, junctions and schematic coordinate conventions.
+- [Docker Compose merge behavior](https://docs.docker.com/reference/compose-file/merge/): the published-image overlay clears local `build` entries with `!reset` while retaining the shared service configuration.
 - [FastEmbed supported models](https://qdrant.github.io/fastembed/examples/Supported_Models/): local BGE model and embedding dimensionality.
 - [FastAPI container guidance](https://fastapi.tiangolo.com/deployment/docker/): dedicated Python service image.
 

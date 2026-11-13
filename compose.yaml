@@ -71,7 +71,7 @@ services:
   web:
     restart: unless-stopped
     build: ./frontend
-    ports: ['127.0.0.1:8080:80']
+    ports: ['127.0.0.1:${BENCHTRACE_PORT:-8080}:80']
     depends_on:
       api:
         condition: service_healthy
