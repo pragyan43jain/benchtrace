@@ -106,3 +106,8 @@ Verification against the pinned engine image: **67 engine tests passed** (one up
 ## Milestone 15 — schematic topology CI
 
 The GitHub Actions workflow **43387281908** passed on `1f6e865`: Go race/vet, frontend build/unit tests/audit, Docker build, 67 engine tests, API and security integration, and all four Playwright tests. Only upstream action/runner deprecation annotations were emitted.
+
+
+## Milestone 16 — versioned prerelease images
+
+Created and pushed annotated tag `v0.1.1-rc.1`. GHCR publication workflow **43387718543** passed for backend, AI engine and frontend. All three public manifests resolve, and the updated AI engine image was pulled and exercised against the demo schematic, returning four sensor pin-to-label nets. Engine digest: `sha256:1b074013dd2d13a9e9316b2c919c8926a463232fe3ddb67dd36fd3af49c3b77c`. Final audit-doc CI run **43387690703** passed for commit `20b03b2`. This is a release candidate, not a production-completeness claim or hosted deployment.
