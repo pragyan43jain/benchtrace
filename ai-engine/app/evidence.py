@@ -75,6 +75,11 @@ def firmware(text):
         findings.append(dict(type='missing_init',line=1,excerpt='No Wire.begin call found in this file; initialization may occur elsewhere'))
     for m in re.finditer(r'^\s*Wire\.endTransmission\s*\([^)]*\)\s*;',clean,re.M):
         findings.append(dict(type='unchecked_result',line=clean.count('\n',0,m.start())+1,excerpt=m[0].strip()))
+    # Flag common blocking I2C reads without suggesting runtime certainty.
+    for m in re.finditer(r'\bwhile\s*\([^)]*Wire\.available\s*\([^)]*\)[^)]*\)',clean):
+        tail=clean[m.end():m.end()+500]
+        if not re.search(r'\b(?:millis|micros)\s*\(|\btimeout\b|\bdeadline\b',tail,re.I):
+            findings.append(dict(type='unbounded_i2c_wait',line=clean.count('\n',0,m.start())+1,excerpt=m[0],explanation='A loop waits on Wire.available without an obvious nearby timeout. Static pattern only: another exit path or timeout helper may exist outside this window.'))
     # Lightweight error-path checks stay advisory and retain the triggering line.
     for m in re.finditer(r'Wire\.requestFrom\s*\(([^)]*)\)',clean):
         tail=clean[m.end():m.end()+500]
@@ -93,6 +98,7 @@ def firmware(text):
         'gpio':'Configures a pin mode. Its runtime path and board-specific electrical suitability are not established.',
         'uart_begin':'Requests serial initialization; compare baud and frame format with the capture and connected device.',
         'spi_begin':'Initializes the SPI peripheral; pin mapping and transaction mode may be configured elsewhere.',
+        'unbounded_i2c_wait':'A loop waits on Wire.available without an obvious nearby timeout; static pattern does not establish reachable blocking behavior.',
         'unchecked_i2c_read':'A requestFrom call has no nearby available-byte check. Verify returned byte count and timeout handling; this scan does not follow control flow.',
         'blocking_delay':'Blocks this task for the specified delay. Impact on deadlines depends on task scheduling and runtime paths.',
         'unchecked_result':'The endTransmission return value is discarded here, so this call does not report transaction failure to its caller.',

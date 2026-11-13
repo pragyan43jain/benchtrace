@@ -160,3 +160,10 @@ def test_firmware_flags_unchecked_request_from():
     assert 'does not follow control flow' in finding['explanation']
     checked=firmware('void readSensor(){ Wire.requestFrom(0x48, 2); while(Wire.available()) Wire.read(); }')['findings']
     assert not any(x['type']=='unchecked_i2c_read' for x in checked)
+
+def test_firmware_flags_wire_available_wait_without_local_timeout():
+    findings=firmware('void readSensor(){ while(Wire.available()==0) { } }')['findings']
+    f=next(x for x in findings if x['type']=='unbounded_i2c_wait')
+    assert f['line']==1 and 'does not establish reachable blocking behavior' in f['explanation']
+    bounded=firmware('void readSensor(){ auto start=millis(); while(Wire.available()==0) { if(millis()-start>20) break; } }')['findings']
+    assert not any(x['type']=='unbounded_i2c_wait' for x in bounded)
