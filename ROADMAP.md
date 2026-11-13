@@ -11,8 +11,8 @@ No production-completeness claim is made until all required checks pass.
 | 4 Engineering intelligence | Supported subset implemented | Bounded Arduino/ESP-IDF firmware patterns; KiCad `.net` connectivity and bounded root-sheet orthogonal `.kicad_sch` topology; unsupported geometry and broader AST/control-flow analysis are documented |
 | 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, five competing rule families, traceable tests and ranking |
 | 6 Product workflow | Implemented and browser verified | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events and browser regression |
-| 7 Production quality | Ongoing audit | Security checks and source/published-image local deployments pass; full workflow 43390628067 passes; remaining audit boundaries are recorded in docs/REQUIREMENTS.md |
-| 8 Release | Release candidates published | Required docs, screenshots, reproducible simulation, milestone pushes and GHCR images for all three services; no stable release or hosted production deployment claimed |
+| 7 Production quality | Ongoing audit | Security checks and source/published-image local deployments pass; full workflow 43396747338 passes; remaining audit boundaries are recorded in docs/REQUIREMENTS.md |
+| 8 Release | Release candidates published | Required docs, screenshots, reproducible simulation, milestone pushes and GHCR images for all three services; v0.1.3-rc.1 pulled and exercised locally; no stable release or hosted production deployment claimed |
 
 ## Design commitments
 - All demo captures explicitly simulated; no physical verification claims.
@@ -143,4 +143,8 @@ Updated waveform protocol rows to render address width and unresolved addresses 
 
 ## Milestone 23 — provider connection check
 
-Added an authenticated Settings action that tests the environment-configured compatible provider using only fixed synthetic citation evidence. Provider response text and secrets are not returned; success requires selection of the known synthetic citation. Requests are rate-limited to three per minute per authenticated account. Provider credentials remain deployment-managed in `.env` rather than being stored in the application database. Full CI run **43395494272** passed the first provider-check implementation. After moving the limiter behind authentication and keying it per account, local Go race/vet, engine suite (**80 passed**), frontend production build, 2 unit tests, npm audit (**0 vulnerabilities**), API integration, negative security regression and all **4 Playwright tests** passed. CI for the final per-account limiter change is pending.
+Added an authenticated Settings action that tests the environment-configured compatible provider using only fixed synthetic citation evidence. Provider response text and secrets are not returned; success requires selection of the known synthetic citation. Requests are rate-limited to three per minute per authenticated account. Provider credentials remain deployment-managed in `.env` rather than being stored in the application database. Full CI run **43395494272** passed the first provider-check implementation; the per-account limiter refinement passed full CI run **43396257168**.
+
+## Milestone 24 — v0.1.3-rc.1 published-image verification
+
+Published backend, frontend and AI-engine images for annotated tag `v0.1.3-rc.1`; GHCR workflow **43397121145** completed successfully. Pulled all three public images and started an isolated image-only Compose stack. All services reached healthy status. Against those images, API health, the complete integration scenario (including provider check and seven/ten-bit I2C decoding), negative security integration and all **4 Playwright tests** passed. The workflow refreshed the mobile workspace and waveform screenshots. This verifies registry images in a local deployment; no public cloud deployment or live external-provider credential check is claimed.
