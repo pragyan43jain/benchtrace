@@ -64,10 +64,11 @@ python3 demo/generate.py
 ```
 
 1. Create an ESP32 project and upload `demo/esp32-i2c/initial-evidence.zip` using automatic categories.
-2. Upload `sensor-datasheet.txt` from the same directory with category **datasheet**.
-3. Inspect the processed `failure.csv`: address `0x49`, address-byte NACK.
-4. Open an investigation and correlate evidence. The firmware address differs from the model’s documented `0x48` address.
-5. Perform the proposed simulated verification using `verification.csv`, record the actual result as **simulated**, and export the report.
+2. Upload `sensor-symbols.kicad_sch` with category **schematic** to see embedded pin metadata; use the `.net` fixture for assumed pin-to-net connectivity.
+3. Upload `sensor-datasheet.txt` from the same directory with category **datasheet**.
+4. Inspect the processed `failure.csv`: address `0x49`, address-byte NACK.
+5. Open an investigation and correlate evidence. The firmware address differs from the model’s documented `0x48` address.
+6. Perform the proposed simulated verification using `verification.csv`, record the actual result as **simulated**, and export the report.
 
 The sensor model, bus capture and serial output are fictional, reproducible fixtures—not physical measurements or a manufacturer’s electrical specification. See [demo/README.md](demo/README.md) for assumptions and limitations.
 
