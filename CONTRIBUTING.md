@@ -2,7 +2,7 @@
 
 Start with a reproducible hardware failure, supported evidence, and a test that can falsify the proposed explanation. Keep contributions focused on engineering investigations.
 
-1. Open an issue with scope and reproducible inputs. Label all simulated captures.
+1. Open the engineering workflow proposal template for new capabilities or the defect template for reproducible failures. Label all simulated captures and remove secrets and proprietary inputs.
 2. Fork and branch from main. Keep secrets and proprietary hardware files out of commits.
 3. Run the checks below and explain any unavailable infrastructure.
 4. Submit a PR describing the failure before/after, evidence provenance, test results and limits.

@@ -1,0 +1,25 @@
+name: Engineering workflow proposal
+description: Propose a capability that improves evidence correlation or verification
+body:
+  - type: textarea
+    attributes:
+      label: Engineering problem
+      description: Describe the failure investigation that is hard to complete today.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Evidence and workflow
+      description: List relevant source files, measurements, protocols, and the steps an engineer should take.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected diagnosis or verification outcome
+      description: Explain what evidence would support or contradict the proposed finding.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Example data and limitations
+      description: Mark simulated data clearly; remove credentials and proprietary information.
