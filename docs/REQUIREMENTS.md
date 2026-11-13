@@ -5,7 +5,7 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 | Requirement | Current implementation / evidence | Status / remaining proof |
 |---|---|---|
 | Repository inspection and baseline | Empty starting directory; Git history records roadmap and first implementation | Complete |
-| New GitHub repo and milestone pushes | https://github.com/pragyan43jain/benchtrace ; seven published milestones | Complete, continue pushes |
+| New GitHub repo and milestone pushes | Public https://github.com/pragyan43jain/benchtrace with engineering topics, continuous tested commit history | Complete, continue pushes |
 | React/TS/Vite/Tailwind/shadcn/Lucide | Frontend build; source-owned Radix button; actual API-backed views | Implemented, retain browser regression |
 | Go REST, structured logs, modular backend | Domain-separated server files plus auth/storage packages | Implemented; strengthen service/module boundaries as needed |
 | Python/FastAPI/Pydantic, NumPy/SciPy/Pandas | Engine source and executed tests | Implemented |
@@ -22,20 +22,20 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 | Firmware functions/GPIO/protocol/init/delay/error handling | Comment/string-aware static patterns with line citations; Arduino `Wire` and ESP-IDF designated I2C bus/device configs | Expanded constant resolution, pin-conflict and invalid-address explanations; explicit ESP-IDF pins/address/clock correlate with schematic and captures; ten-bit device addresses are not compared with seven-bit docs; broader AST/control-flow analysis remains |
 | KiCad components, pins, nets, power graph | `.net` connectivity, `.kicad_sch` component properties and embedded library pin metadata, labels, interactive net graph | Supported subset appears in evidence and component views; unit/API/browser checks cover pin metadata; pin connectivity requires exported `.net`; no schematic wire-geometry claim |
 | Diagnostic problem relevance and evidence selection | User-selected ready files, stored problem/symptoms and explicit unsupported-protocol refusal | Implemented; selection and ownership API regression passed |
-| Ranked competing hypotheses, contradictions, uncertainty and tests | Five rule families, source-count ranking, test records, fixed evaluations | Implemented; automatic update after recording new tests should be clearer |
+| Ranked competing hypotheses, contradictions, uncertainty and tests | Five rule families, source-count ranking, test records, fixed evaluations | Implemented; recording a test reruns diagnosis, updates rank and persists the user-attributed outcome |
 | Measurement/test observations and verification history | Durable tests and event snapshots; user-confirmation attribution | Implemented |
 | Investigation state/resolution/report | Five states, resolution validation, Markdown report download | Verified report source-hash manifest and readable source locations |
 | Knowledge search, procedures, components, verified solutions | Semantic report snapshots, standalone procedures, component references and verified-result filtering | Implemented; expanded API regression passed |
-| Settings/profile/provider/project preferences | Profile/password; server-side provider config; project metadata | Implemented; defaults persist and apply to future uploads |
+| Settings/profile/provider/project preferences | Profile/password and project metadata UI; provider settings are read from server environment | Partially implemented: provider is securely configured out-of-band through `.env`; no in-app provider editor or connection test is available |
 | Real-time processing updates | Owner-filtered Redis/WebSocket events, polling fallback | Verified: two-account WebSocket browser test passed |
 | Input validation, SQL/path/CSRF/secrets/CORS | Negative API suite, no public internal services, same-origin policy | Implemented; atomic rate limits and storage quotas added |
 | Untrusted documents and prompt injection | No firmware execution, read-only engine, provider selects only existing citation IDs | Implemented disposable bounded parser processes and provider rejection tests; not a VM security boundary |
 | Database relationships/indexes/timestamps/migrations | Versioned schema, migration ledger, relationships and update timestamps | Implemented checksum-verified migration ledger, update triggers and project events |
-| Backend, engine, AI, frontend, integration tests | Executed tests recorded in ROADMAP; fixed diagnosis scenarios | Go race/vet, 63 engine tests, API/security integration, 4 browser tests and full CI run 43380716786 passed; the latest corrected KiCad fixture also passed local API and browser workflows, with CI pending |
+| Backend, engine, AI, frontend, integration tests | Executed tests recorded in ROADMAP; fixed diagnosis scenarios | Go race/vet, 63 engine tests, API/security integration, 4 browser tests and full CI run 43380716786 passed; the corrected KiCad fixture passed local API and browser workflows, with its CI run pending |
 | Docker deployment | Running local stack, API integration passes | Verified local; public cloud hosting not configured or claimed |
 | CI/CD | CI runs; first run failed on now-fixed browser locator; tag image workflow exists | CI run 43373860041 green; prerelease image build/publish workflow 43374242750 green for all three images. Engine image local pull remains unverified |
 | Required docs/license/demo/screenshots | Docs exist; actual screenshots; disclosed simulation | README, reproducible PDF generator and screenshots complete; final status matrix remains open |
-| Responsive/accessibility/performance | Desktop workflow, mobile width assertion, scrollable component tables; lazy waveform code | Automated WCAG checks passed for landing/auth/project list desktop/mobile; four-test browser suite including component pins, ranking reassessment and owner-isolation passed locally; CI run 43376992920 passed the prior browser revision |
+| Responsive/accessibility/performance | Desktop workflow, mobile width assertion, scrollable component tables; lazy waveform code | Automated WCAG checks passed for landing/auth/project list desktop/mobile; four-test browser suite including component pins, ranking reassessment and owner-isolation passed locally; CI run 43378902991 passed the mobile table revision |
 
 ## Scope boundaries that remain explicit
 
