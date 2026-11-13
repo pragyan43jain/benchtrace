@@ -4,6 +4,25 @@ import pytest
 from app.evidence import firmware,schematic
 from app.diagnostics import diagnose
 SCENARIOS=json.loads((Path(__file__).parents[1]/'evaluation/scenarios.json').read_text())
+from evaluation.run import evaluate
+
+def test_evaluation_report_enforces_multisource_diagnostic_contracts():
+    report=evaluate()
+    assert report['passed'] and report['scenario_count']==11
+    assert report['fault_targets_included']==report['fault_target_scenarios']==4
+    assert report['fault_targets_ranked_first']==4
+    assert report['grounded_citation_count']==report['citation_count']==18
+    assert report['relevant_test_count']==report['recommended_test_count']==10
+    assert report['complete_uncertainty_count']==report['unverified_hypothesis_count']==60
+    assert report['cross_source']=={
+        'evidence_sources':['capture','circuit','doc','fw','serial'],
+        'top_hypothesis':'address',
+        'capture_protocol_reliable':True,
+        'capture_address':0x49,
+        'capture_ack':False,
+        'hypotheses_remain_unverified':True,
+    }
+
 @pytest.mark.parametrize('case',SCENARIOS,ids=[x['name'] for x in SCENARIOS])
 def test_fixed_diagnostic_scenarios(case):
     files=[{'id':'fw','name':'firmware.ino','category':'firmware','analysis':firmware(case['firmware'])},
