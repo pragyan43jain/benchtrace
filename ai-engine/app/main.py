@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException, Depends
 from pydantic import BaseModel, Field
 from .evidence import embed
+from .retrieval import embedding_version
 from .sandbox import isolated_process
 from .diagnostics import diagnose
 app=FastAPI(title='BenchTrace engineering engine',version='0.1.0')
@@ -31,7 +32,7 @@ def analyze(request:ProcessRequest):
 @app.post('/diagnose',dependencies=[Depends(authorize)])
 def diagnostic(request:DiagnosticRequest):return diagnose(request.files,request.tests,request.problem)
 @app.post('/embed',dependencies=[Depends(authorize)])
-def embedding(request:EmbedRequest):return {'embedding':embed(request.text),'method':os.getenv('EMBEDDING_MODE','semantic')}
+def embedding(request:EmbedRequest):return {'embedding':embed(request.text),'method':os.getenv('EMBEDDING_MODE','semantic'),'version':embedding_version()}
 
 class AnswerRequest(BaseModel):
     question:str=Field(max_length=2000)
@@ -41,7 +42,7 @@ def generate_answer(request:AnswerRequest):
     from .answers import answer
     return answer(request.question,request.evidence)
 @app.post('/config',dependencies=[Depends(authorize)])
-def config():return {'embedding_mode':os.getenv('EMBEDDING_MODE','semantic'),'model':'BAAI/bge-small-en-v1.5','provider_configured':bool(os.getenv('LLM_BASE_URL')),'diagnostics':'deterministic evidence rules','decoder_defaults':{'threshold':1.65,'baud':115200,'cpol':0,'cpha':0}}
+def config():return {'embedding_version':embedding_version(),'embedding_mode':os.getenv('EMBEDDING_MODE','semantic'),'model':'BAAI/bge-small-en-v1.5','provider_configured':bool(os.getenv('LLM_BASE_URL')),'diagnostics':'deterministic evidence rules','decoder_defaults':{'threshold':1.65,'baud':115200,'cpol':0,'cpha':0}}
 
 class CompareRequest(BaseModel):
     left:str=Field(pattern=r'^[a-f0-9-]{36}\.csv$')

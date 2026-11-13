@@ -47,3 +47,5 @@ Semantic vectors are 384-dimensional BGE-small English embeddings, produced loca
 ## Deployment boundaries
 
 Compose exposes only nginx on loopback port 8080. Databases, Redis and the engine have no host ports. Public deployment requires HTTPS termination, an exact APP_ORIGIN, secure cookies, backups, resource monitoring and an operator-managed release process. See SECURITY.md and ROADMAP.md for remaining limitations; local container success is not evidence of a public production deployment.
+
+The embedding artifact is pinned by repository revision and SHA-256 hashes in `ai-engine/model.lock.json`. Image builds verify each file; runtime uses the baked local model without network downloads. Embedding identities travel with vectors and prevent cross-version comparisons. Update the lock, runtime identity, and compatibility tests together when changing models.

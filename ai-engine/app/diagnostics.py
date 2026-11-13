@@ -13,9 +13,9 @@ def diagnose(files, tests=None, problem=""):
         for x in a.get('findings',[]):
             if x['type']=='i2c_address' and x['values'] and x['values'][0] is not None:
                 addresses.append((x['values'][0],citation(f,x['excerpt'],line=x['line'])))
-            if x['type']=='i2c_begin': pins.append((x.get('values',[]),citation(f,x['excerpt'],line=x['line'])))
+            if x['type']=='i2c_begin' and len(x.get('values',[])) in (2,3): pins.append((x.get('values',[]),citation(f,x['excerpt'],line=x['line'])))
             if x['type']=='i2c_clock' and x.get('values') and x['values'][0]:clocks.append((x['values'][0],citation(f,x['excerpt'],line=x['line'])))
-            if x['type']=='missing_init':missing.append(citation(f,x['excerpt'],line=x['line']))
+            if x['type'] in ('missing_init','pin_conflict'):missing.append(citation(f,x['excerpt'],line=x['line']))
         if a.get('kind')=='circuit':circuits.append((a,citation(f,a['scope'])))
         if f.get('category')=='log' or f['name'].lower().startswith('serial'):
             for c in a.get('chunks',[]):

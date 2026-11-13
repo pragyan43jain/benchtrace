@@ -18,7 +18,7 @@ export function Evidence({ analysis: a }: { analysis: any }) {
               <span className="badge">
                 Line {f.line} · {f.type.replaceAll("_", " ")}
               </span>
-              <pre>{f.excerpt}</pre>
+              <pre>{f.excerpt}</pre><p className="muted">{f.explanation}</p>
             </div>
           ))}
         </>

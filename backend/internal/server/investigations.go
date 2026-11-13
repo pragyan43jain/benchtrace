@@ -310,13 +310,14 @@ func (s *Server) saveKnowledge(w http.ResponseWriter, r *http.Request) {
 	}
 	var emb struct {
 		Embedding []float64 `json:"embedding"`
+		Version   string    `json:"version"`
 	}
 	if e = s.engine(r.Context(), "/embed", map[string]string{"text": body[:min(len(body), 20000)]}, &emb); e != nil {
 		fail(w, 502, "Retrieval engine unavailable")
 		return
 	}
 	b, _ := json.Marshal(emb.Embedding)
-	_, e = s.DB.Exec(r.Context(), "INSERT INTO knowledge_entries(id,project_id,investigation_id,title,content,embedding,verification) VALUES($1,$2,$3,$4,$5,$6::vector,$7)", auth.ID(), r.PathValue("project"), r.PathValue("investigation"), i["problem"], body, string(b), verification)
+	_, e = s.DB.Exec(r.Context(), "INSERT INTO knowledge_entries(id,project_id,investigation_id,title,content,embedding,verification,embedding_version) VALUES($1,$2,$3,$4,$5,$6::vector,$7,$8)", auth.ID(), r.PathValue("project"), r.PathValue("investigation"), i["problem"], body, string(b), verification, emb.Version)
 	if !dbError(w, e) {
 		respond(w, 201, map[string]bool{"ok": true})
 	}
@@ -334,13 +335,13 @@ func (s *Server) knowledge(w http.ResponseWriter, r *http.Request) {
 	if q == "" {
 		v, e = s.query(r, "SELECT row_to_json(k) FROM knowledge_entries k JOIN projects p ON p.id=k.project_id WHERE p.owner_id=$1 AND (NOT $2 OR k.verification='user_confirmed') AND ($3='' OR k.project_id::text=$3) ORDER BY k.created_at DESC LIMIT 100", user(r), verified, project)
 	} else {
-		values, err := s.embedding(r.Context(), q)
+		values, version, err := s.embedding(r.Context(), q)
 		if err != nil {
 			fail(w, 502, "Retrieval engine unavailable")
 			return
 		}
 		raw, _ := json.Marshal(values)
-		v, e = s.query(r, "SELECT row_to_json(k) FROM knowledge_entries k JOIN projects p ON p.id=k.project_id WHERE p.owner_id=$1 AND (NOT $3 OR k.verification='user_confirmed') AND ($4='' OR k.project_id::text=$4) ORDER BY k.embedding <=> $2::vector LIMIT 20", user(r), string(raw), verified, project)
+		v, e = s.query(r, "SELECT row_to_json(k) FROM knowledge_entries k JOIN projects p ON p.id=k.project_id WHERE p.owner_id=$1 AND (NOT $3 OR k.verification='user_confirmed') AND ($4='' OR k.project_id::text=$4) AND k.embedding_version=$5 ORDER BY k.embedding <=> $2::vector LIMIT 20", user(r), string(raw), verified, project, version)
 	}
 	if !dbError(w, e) {
 		respond(w, 200, v)

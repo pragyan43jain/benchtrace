@@ -6,6 +6,7 @@ from pathlib import Path
 import sexpdata
 from pypdf import PdfReader
 from .specifications import characteristics
+from .retrieval import embedding_version
 
 
 def lexical_embed(text):
@@ -47,15 +48,19 @@ def document(path):
             if re.search(r'(?i)(0x[0-9a-f]{2}|\b\d+(?:\.\d+)?\s*(?:V|kHz|MHz|ns|µs|mA)\b|SDA|SCL|I2C|UART|SPI)',line):
                 specs.append(dict(page=page,excerpt=line[:600],classification='documented excerpt; applicability unverified'))
     if not chunks: raise ValueError('No extractable text; scanned PDFs require OCR (not supported)')
-    return dict(kind='document',pages=len(pages),chunks=chunks,specifications=specs[:200],characteristics=structured[:1000],extraction_limits={'specification_excerpts_truncated':len(specs)>200,'characteristics_truncated':len(structured)>1000},summary='\n'.join(pages[0].splitlines()[:8])[:1000],summary_method='Extractive first-page excerpt')
+    return dict(kind='document',embedding_version=embedding_version(),pages=len(pages),chunks=chunks,specifications=specs[:200],characteristics=structured[:1000],extraction_limits={'specification_excerpts_truncated':len(specs)>200,'characteristics_truncated':len(structured)>1000},summary='\n'.join(pages[0].splitlines()[:8])[:1000],summary_method='Extractive first-page excerpt')
 
 
 def firmware(text):
     # Strip comments but retain line count; deliberately avoid claiming AST-level understanding.
     clean=re.sub(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"',lambda m:''.join('\n' if c=='\n' else ' ' for c in m[0]),text,flags=re.S)
     defines=dict(re.findall(r'^\s*#define\s+(\w+)\s+(0x[\da-fA-F]+|\d+)\b',clean,re.M))
+    defines.update(dict(re.findall(r'\b(?:constexpr|const)\s+(?:unsigned\s+)?(?:int|uint\d+_t|byte|auto)\s+(\w+)\s*=\s*(0x[\da-fA-F]+|\d+)\s*;',clean)))
     def number(v):
-        v=defines.get(v.strip(),v.strip())
+        v=v.strip()
+        for _ in range(8):
+            if v not in defines:break
+            v=defines[v]
         try: return int(v,0)
         except ValueError: return None
     findings=[]
@@ -70,6 +75,25 @@ def firmware(text):
         findings.append(dict(type='missing_init',line=1,excerpt='No Wire.begin call found in this file; initialization may occur elsewhere'))
     for m in re.finditer(r'^\s*Wire\.endTransmission\s*\([^)]*\)\s*;',clean,re.M):
         findings.append(dict(type='unchecked_result',line=clean.count('\n',0,m.start())+1,excerpt=m[0].strip()))
+    explanations={
+        'i2c_begin':'Configures the Arduino Wire bus. Literal arguments are static observations, not proof that initialization executes successfully.',
+        'i2c_address':'Targets this value in a Wire transaction. Compare the seven-bit address with the exact part and address straps.',
+        'i2c_clock':'Requests a bus clock rate. Actual clock and clock stretching must be checked in a capture.',
+        'gpio':'Configures a pin mode. Its runtime path and board-specific electrical suitability are not established.',
+        'uart_begin':'Requests serial initialization; compare baud and frame format with the capture and connected device.',
+        'spi_begin':'Initializes the SPI peripheral; pin mapping and transaction mode may be configured elsewhere.',
+        'blocking_delay':'Blocks this task for the specified delay. Impact on deadlines depends on task scheduling and runtime paths.',
+        'unchecked_result':'The endTransmission return value is discarded here, so this call does not report transaction failure to its caller.',
+        'missing_init':'No local initialization call was found. Inspect other files before concluding initialization is absent.'}
+    extra=[]
+    for finding in findings:
+        finding['explanation']=explanations.get(finding['type'],'Static pattern observation; verify in context.')
+        values=finding.get('values',[])
+        if finding['type']=='i2c_begin' and len(values) in (2,3) and values[0] is not None and values[0]==values[1]:
+            extra.append(dict(type='pin_conflict',line=finding['line'],excerpt=finding['excerpt'],explanation='The recognized master-mode call assigns SDA and SCL to the same pin. Verify the intended Wire.begin overload and board mapping.'))
+        if finding['type']=='i2c_address' and values and values[0] is not None and not 0<=values[0]<=127:
+            extra.append(dict(type='invalid_address',line=finding['line'],excerpt=finding['excerpt'],explanation='The literal target is outside the seven-bit address range. Check whether an eight-bit transfer byte was used instead of a seven-bit address.'))
+    findings.extend(extra)
     functions=re.findall(r'\b(?:void|int|bool|float|double|uint\d+_t)\s+(\w+)\s*\([^;{}]*\)\s*\{',clean)
     return dict(kind='firmware',method='Bounded Arduino C/C++ pattern analysis; no execution or full AST/type resolution',functions=functions,findings=findings)
 

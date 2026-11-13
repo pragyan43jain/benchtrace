@@ -124,13 +124,13 @@ small {
   white-space: nowrap;
 }
 .btn-primary {
-  background: #4f8cff;
+  background: #2d69d4;
   color: #fff;
   border-color: #6097ff;
   box-shadow: 0 1px 2px #0003;
 }
 .btn-primary:hover {
-  background: #639aff;
+  background: #386fd8;
   color: #fff;
 }
 .btn-outline {
@@ -242,7 +242,7 @@ small {
   right: 25px;
   top: 25px;
   font-family: monospace;
-  color: #52647c;
+  color: #8b9bb2;
 }
 .landing-bottom {
   display: grid;
@@ -315,7 +315,7 @@ select {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #62728a;
+  color: #8b9bb2;
 }
 textarea {
   resize: vertical;
@@ -356,7 +356,7 @@ aside .logo {
   margin: 40px 13px 12px;
   font-size: 9px;
   letter-spacing: 1.5px;
-  color: #63758e;
+  color: #8b9bb2;
   font-weight: 600;
 }
 aside nav {
@@ -391,7 +391,7 @@ aside nav button:hover {
   align-items: flex-start;
   gap: 9px;
   padding: 20px 12px;
-  color: #62728a;
+  color: #8b9bb2;
   font-size: 11px;
 }
 .aside-note p {
@@ -421,7 +421,7 @@ aside nav button:hover {
 }
 .profile small {
   display: block;
-  color: #63758e;
+  color: #8b9bb2;
   font-size: 10px;
 }
 .profile button {
@@ -451,7 +451,7 @@ aside nav button:hover {
   gap: 10px;
 }
 .topbar a {
-  color: #63758e;
+  color: #8b9bb2;
 }
 .content {
   padding: 37px 35px 60px;
@@ -679,7 +679,7 @@ aside nav button:hover {
 }
 .file-list small {
   display: block;
-  color: #677c98;
+  color: #8b9bb2;
   font-size: 9px;
 }
 .file-list button > div {

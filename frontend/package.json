@@ -10,25 +10,26 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "lucide-react": "0.511.0",
-    "recharts": "3.10.1",
-    "uplot": "1.6.32",
     "@radix-ui/react-slot": "1.2.2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
-    "tailwind-merge": "3.2.0"
+    "lucide-react": "0.511.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "recharts": "3.10.1",
+    "tailwind-merge": "3.2.0",
+    "uplot": "1.6.32"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.65.0",
+    "@tailwindcss/vite": "4.3.5",
     "@types/react": "19.1.4",
     "@types/react-dom": "19.1.5",
     "@vitejs/plugin-react": "6.3.0",
+    "tailwindcss": "4.3.5",
     "typescript": "5.8.3",
     "vite": "8.3.8",
-    "tailwindcss": "4.3.5",
-    "@tailwindcss/vite": "4.3.5",
-    "vitest": "5.1.0",
-    "@playwright/test": "1.65.0"
+    "vitest": "5.1.0"
   }
 }

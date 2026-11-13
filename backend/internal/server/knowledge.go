@@ -24,6 +24,7 @@ func (s *Server) createProcedure(w http.ResponseWriter, r *http.Request) {
 	}
 	var emb struct {
 		Embedding []float64 `json:"embedding"`
+		Version   string    `json:"version"`
 	}
 	if e := s.engine(r.Context(), "/embed", map[string]string{"text": p.Title + "\n" + p.Content[:min(len(p.Content), 19000)]}, &emb); e != nil {
 		fail(w, 502, "Retrieval engine unavailable")
@@ -31,7 +32,7 @@ func (s *Server) createProcedure(w http.ResponseWriter, r *http.Request) {
 	}
 	raw, _ := json.Marshal(emb.Embedding)
 	id := auth.ID()
-	_, e := s.DB.Exec(r.Context(), "INSERT INTO knowledge_entries(id,project_id,title,content,embedding,kind) VALUES($1,$2,$3,$4,$5::vector,'procedure')", id, r.PathValue("project"), p.Title, p.Content, string(raw))
+	_, e := s.DB.Exec(r.Context(), "INSERT INTO knowledge_entries(id,project_id,title,content,embedding,kind,embedding_version) VALUES($1,$2,$3,$4,$5::vector,'procedure',$6)", id, r.PathValue("project"), p.Title, p.Content, string(raw), emb.Version)
 	if !dbError(w, e) {
 		respond(w, 201, map[string]string{"id": id})
 	}

@@ -28,3 +28,7 @@ Back up the PostgreSQL database and upload volume together. Database rows withou
 ## Embedding compatibility
 
 The deployment uses `BAAI/bge-small-en-v1.5` (384 dimensions). Changing models or switching lexical/semantic modes requires reprocessing documents and regenerating knowledge embeddings. Never rank vectors from different models together.
+
+## Embedding upgrades
+
+Migration 003 records the embedding identity on document chunks and knowledge entries. Legacy vectors are marked `unknown`; they are not silently labeled as the current model. Semantic queries require a matching identity. During idle job-worker ticks, one old vector is rebuilt from preserved text. Source IDs and citations remain stable. Search coverage can temporarily decrease while backfill runs; unfiltered knowledge browsing remains available. Redis vector keys include the model identity. Switching lexical/semantic modes also triggers this backfill.

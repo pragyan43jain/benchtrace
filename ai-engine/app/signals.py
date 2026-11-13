@@ -95,6 +95,7 @@ def decode_uart(t, rx, baud=115200, threshold=1.65):
     if max(np.diff(t))*baud > .125*(1+1e-9):
         return dict(frames=[],reliable=False,warnings=['Require at least 8 samples per UART bit'])
     d=digital(rx,threshold); frames=[]; until=-1
+    warnings=[] if d[0] else ['Capture starts with UART RX low; initial frame boundary is unknown']
     for i in np.flatnonzero(d[:-1] & ~d[1:])+1:
         if t[i] < until: continue
         times=t[i]+np.arange(.5,10,1)/baud
@@ -103,7 +104,7 @@ def decode_uart(t, rx, baud=115200, threshold=1.65):
         if bits[0]: continue
         frames.append(dict(time=float(t[i]),value=sum(int(b)<<j for j,b in enumerate(bits[1:9])),framing_error=not bool(bits[9])))
         until=t[i]+9.5/baud
-    return dict(frames=frames,reliable=bool(frames) and not any(f['framing_error'] for f in frames),warnings=[] if frames else ['No complete UART frames found'],format='8N1, non-inverted')
+    return dict(frames=frames,reliable=bool(frames) and not warnings and not any(f['framing_error'] for f in frames),warnings=warnings+([] if frames else ['No complete UART frames found']),format='8N1, non-inverted')
 
 
 def decode_spi(t, clk, mosi, cs, cpol=0, cpha=0, threshold=1.65):
@@ -113,10 +114,15 @@ def decode_spi(t, clk, mosi, cs, cpol=0, cpha=0, threshold=1.65):
     if len(edges)>1 and min(np.diff(t[edges])) < 3*max(np.diff(t)):
         return dict(frames=[],reliable=False,warnings=['Require 3 samples per SPI half-period'])
     frames=[];bits=[];warnings=[]
+    boundary_known=bool(s[0])
+    if not boundary_known: warnings.append('Capture starts with CS active; initial word boundary is unknown')
+    boundary_known=True
     for i in range(1,len(t)):
         if s[i]:
+            boundary_known=True
             if bits: warnings.append('Partial SPI word at chip-select boundary');bits=[]
             continue
+        if s[i]!=s[i-1] and c[i]!=c[i-1]: warnings.append('Simultaneous chip-select and clock transition; ordering is ambiguous')
         if c[i]!=c[i-1] and ((c[i]!=bool(cpol)) != bool(cpha)):
             bits.append(int(d[i]))
             if len(bits)==8:

@@ -129,3 +129,26 @@ def test_filter_alignment_and_large_preview_preserve_endpoints():
     t=np.arange(10)*.001;y=np.arange(10,dtype=float)
     s=stats(t,y);assert s['moving_average']==pytest.approx([2,3,4,5,6,7])
     assert s['moving_average_time']==pytest.approx(t[2:-2])
+
+def test_firmware_constant_resolution_pin_conflict_and_explanations():
+    a=firmware('constexpr uint8_t SENSOR=0x90;\nvoid setup(){Wire.begin(21,21); Wire.beginTransmission(SENSOR);\nWire.endTransmission();\ndelay(1000);}')
+    kinds={x['type'] for x in a['findings']}
+    assert {'invalid_address','pin_conflict','unchecked_result','blocking_delay'}<=kinds
+    assert all(x['explanation'] for x in a['findings'])
+
+def test_four_argument_wire_overload_is_not_assumed_master_pins():
+    r=diagnose([dict(id='f',name='main.ino',analysis=firmware('Wire.begin(0x48,21,22,100000);'))])
+    assert not next(h for h in r['hypotheses'] if h['key']=='pins')['supporting_evidence']
+
+
+def test_initial_partial_protocol_captures_are_not_trusted():
+    t=np.arange(2000)*1e-7
+    rx=np.zeros(len(t));rx[100:]=3.3
+    result=decode_uart(t,rx,baud=100000)
+    assert not result['reliable']
+    assert any('boundary' in w for w in result['warnings'])
+    clk=((np.arange(len(t))//10)%2)*3.3
+    result=decode_spi(t,clk,np.ones(len(t))*3.3,np.zeros(len(t)))
+    assert not result['reliable']
+    assert any('boundary' in w for w in result['warnings'])
+    assert result['frames'], 'complete byte values may be shown with an explicit untrusted-boundary warning'

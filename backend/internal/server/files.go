@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coder/websocket"
+	"github.com/jackc/pgx/v5"
 	"io"
 	"log/slog"
 	"net/http"
@@ -185,6 +186,11 @@ func (s *Server) Worker(ctx context.Context) {
 		var id, file, key string
 		e = s.DB.QueryRow(ctx, `WITH job AS (SELECT id FROM background_jobs WHERE status='queued' AND attempts<3 ORDER BY updated_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE background_jobs j SET status='processing',attempts=attempts+1,updated_at=now() FROM job WHERE j.id=job.id RETURNING j.id,j.file_id,(SELECT storage_key FROM project_files WHERE id=j.file_id)`).Scan(&id, &file, &key)
 		if e != nil {
+			if e == pgx.ErrNoRows {
+				if err := s.refreshEmbedding(ctx); err != nil {
+					slog.Warn("embedding backfill", "error", err)
+				}
+			}
 			continue
 		}
 		s.DB.Exec(ctx, "UPDATE project_files SET status='processing' WHERE id=$1", file)
@@ -222,7 +228,7 @@ func (s *Server) storeAnalysis(ctx context.Context, file, job string, a map[stri
 		for _, c := range chunks {
 			x := c.(map[string]any)
 			v, _ := json.Marshal(x["embedding"])
-			_, e = tx.Exec(ctx, "INSERT INTO document_chunks(id,document_id,page,content,embedding) VALUES($1,$2,$3,$4,$5::vector)", auth.ID(), file, x["page"], x["content"], string(v))
+			_, e = tx.Exec(ctx, "INSERT INTO document_chunks(id,document_id,page,content,embedding,embedding_version) VALUES($1,$2,$3,$4,$5::vector,$6)", auth.ID(), file, x["page"], x["content"], string(v), a["embedding_version"])
 			if e != nil {
 				return e
 			}
@@ -280,13 +286,13 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Query requires 1–2000 characters")
 		return
 	}
-	embedding, e := s.embedding(r.Context(), q.Query)
+	embedding, version, e := s.embedding(r.Context(), q.Query)
 	if e != nil {
 		fail(w, 502, "Retrieval engine unavailable")
 		return
 	}
 	b, _ := json.Marshal(embedding)
-	rows, e := s.query(r, `SELECT row_to_json(x) FROM (SELECT c.id,c.document_id AS file_id,f.name AS source,c.page,c.content,1-(c.embedding <=> $2::vector) AS similarity FROM document_chunks c JOIN project_files f ON f.id=c.document_id WHERE f.project_id::text=$1 ORDER BY c.embedding <=> $2::vector LIMIT 6) x`, r.PathValue("project"), string(b))
+	rows, e := s.query(r, `SELECT row_to_json(x) FROM (SELECT c.id,c.document_id AS file_id,f.name AS source,c.page,c.content,1-(c.embedding <=> $2::vector) AS similarity FROM document_chunks c JOIN project_files f ON f.id=c.document_id WHERE f.project_id::text=$1 AND c.embedding_version=$3 ORDER BY c.embedding <=> $2::vector LIMIT 6) x`, r.PathValue("project"), string(b), version)
 	if dbError(w, e) {
 		return
 	}
