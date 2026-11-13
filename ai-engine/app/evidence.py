@@ -75,6 +75,17 @@ def firmware(text):
         findings.append(dict(type='missing_init',line=1,excerpt='No Wire.begin call found in this file; initialization may occur elsewhere'))
     for m in re.finditer(r'^\s*Wire\.endTransmission\s*\([^)]*\)\s*;',clean,re.M):
         findings.append(dict(type='unchecked_result',line=clean.count('\n',0,m.start())+1,excerpt=m[0].strip()))
+    # Lightweight error-path checks stay advisory and retain the triggering line.
+    for m in re.finditer(r'Wire\.requestFrom\s*\(([^)]*)\)',clean):
+        tail=clean[m.end():m.end()+500]
+        if 'Wire.available' not in tail:
+            findings.append(dict(type='unchecked_i2c_read',line=clean.count('\n',0,m.start())+1,excerpt=m[0],explanation='A requestFrom call appears without a nearby Wire.available check. Verify the returned byte count and timeout behavior; this bounded scan does not follow control flow.'))
+    for m in re.finditer(r'Wire\.endTransmission\s*\([^)]*\)',clean):
+        tail=clean[m.end():m.end()+180]
+        if re.match(r'\s*;',tail) and not re.search(r'if\s*\(\s*Wire\.endTransmission',clean[max(0,m.start()-100):m.start()]):
+            line=clean.count('\n',0,m.start())+1
+            if not any(f.get('type')=='unchecked_result' and f.get('line')==line for f in findings):
+                findings.append(dict(type='unchecked_result',line=line,excerpt=m[0],explanation='The endTransmission status may be discarded; inspect return-code handling around this call.'))
     explanations={
         'i2c_begin':'Configures the Arduino Wire bus. Literal arguments are static observations, not proof that initialization executes successfully.',
         'i2c_address':'Targets this value in a Wire transaction. Compare the seven-bit address with the exact part and address straps.',
@@ -82,6 +93,7 @@ def firmware(text):
         'gpio':'Configures a pin mode. Its runtime path and board-specific electrical suitability are not established.',
         'uart_begin':'Requests serial initialization; compare baud and frame format with the capture and connected device.',
         'spi_begin':'Initializes the SPI peripheral; pin mapping and transaction mode may be configured elsewhere.',
+        'unchecked_i2c_read':'A requestFrom call has no nearby available-byte check. Verify returned byte count and timeout handling; this scan does not follow control flow.',
         'blocking_delay':'Blocks this task for the specified delay. Impact on deadlines depends on task scheduling and runtime paths.',
         'unchecked_result':'The endTransmission return value is discarded here, so this call does not report transaction failure to its caller.',
         'missing_init':'No local initialization call was found. Inspect other files before concluding initialization is absent.'}

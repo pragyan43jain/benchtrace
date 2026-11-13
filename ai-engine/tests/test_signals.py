@@ -152,3 +152,11 @@ def test_initial_partial_protocol_captures_are_not_trusted():
     assert not result['reliable']
     assert any('boundary' in w for w in result['warnings'])
     assert result['frames'], 'complete byte values may be shown with an explicit untrusted-boundary warning'
+
+def test_firmware_flags_unchecked_request_from():
+    findings=firmware('void readSensor(){ Wire.requestFrom(0x48, 2); int value=Wire.read(); }')['findings']
+    finding=next(x for x in findings if x['type']=='unchecked_i2c_read')
+    assert finding['line']==1
+    assert 'does not follow control flow' in finding['explanation']
+    checked=firmware('void readSensor(){ Wire.requestFrom(0x48, 2); while(Wire.available()) Wire.read(); }')['findings']
+    assert not any(x['type']=='unchecked_i2c_read' for x in checked)
