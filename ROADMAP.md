@@ -8,11 +8,11 @@ No production-completeness claim is made until all required checks pass.
 | 1 Foundation | Implemented; regression verification underway | Sessions, owner isolation, projects, versioned migrations, React workspace |
 | 2 Documents | Implemented supported subset | PDF/text extraction, structured explicit characteristics, local semantic retrieval, cited answers |
 | 3 Signals | Implemented supported subset | Validated CSV, numerical analysis, bounded I2C/UART/SPI, waveform controls and comparison |
-| 4 Engineering intelligence | Partially implemented | Bounded Arduino/ESP-IDF firmware patterns, KiCad netlist graph, visible schematic pin metadata; broader static-analysis and schematic geometry remain |
+| 4 Engineering intelligence | Supported subset implemented | Bounded Arduino/ESP-IDF firmware patterns; KiCad `.net` connectivity and bounded root-sheet orthogonal `.kicad_sch` topology; unsupported geometry and broader AST/control-flow analysis are documented |
 | 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, five competing rule families, traceable tests and ranking |
-| 6 Product workflow | Implemented; browser regression underway | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events |
-| 7 Production quality | In progress | Security checks and local deployment pass; full CI run 43376992920 passes; product audit items remain |
-| 8 Release | In progress | Required docs, screenshots, reproducible simulation and GitHub milestones; GHCR prerelease workflow 43374242750 succeeded for all three images |
+| 6 Product workflow | Implemented and browser verified | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events and browser regression |
+| 7 Production quality | Ongoing audit | Security checks and source/published-image local deployments pass; full workflow 43390628067 passes; remaining audit boundaries are recorded in docs/REQUIREMENTS.md |
+| 8 Release | Release candidates published | Required docs, screenshots, reproducible simulation, milestone pushes and GHCR images for all three services; no stable release or hosted production deployment claimed |
 
 ## Design commitments
 - All demo captures explicitly simulated; no physical verification claims.
