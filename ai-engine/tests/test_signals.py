@@ -168,6 +168,24 @@ const i2c_device_config_t device = {
     routing=next(h for h in result['hypotheses'] if h['key']=='pins')
     assert routing['contradictory_evidence'] and not routing['supporting_evidence']
 
+def test_esp_idf_10_bit_address_is_not_compared_as_seven_bit():
+    source='''const i2c_device_config_t device = {
+      .dev_addr_length = I2C_ADDR_BIT_LEN_10,
+      .device_address = 0x1FF,
+      .scl_speed_hz = 100000,
+    };'''
+    analysis=firmware(source)
+    assert not any(x['type']=='invalid_address' for x in analysis['findings'])
+    files=[dict(id='f',name='main.c',category='firmware',analysis=analysis),
+           dict(id='d',name='sensor.pdf',category='datasheet',analysis={'chunks':[{'page':1,'content':'7-bit I2C address: 0x48'}]})]
+    address=next(h for h in diagnose(files)['hypotheses'] if h['key']=='address')
+    assert not address['supporting_evidence'] and not address['contradictory_evidence']
+
+def test_esp_idf_7_bit_address_range_is_checked():
+    analysis=firmware('const i2c_device_config_t d={.dev_addr_length=I2C_ADDR_BIT_LEN_7,.device_address=0x90,.scl_speed_hz=100000};')
+    finding=next(x for x in analysis['findings'] if x['type']=='invalid_address')
+    assert '7-bit address range' in finding['explanation']
+
 
 def test_initial_partial_protocol_captures_are_not_trusted():
     t=np.arange(2000)*1e-7

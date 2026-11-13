@@ -85,13 +85,17 @@ def firmware(text):
                                  excerpt=m[0][:500],arguments=args,values=[number(x) for x in args],
                                  source_api='ESP-IDF i2c_master_bus_config_t designated initializer'))
     for m in re.finditer(r'\bi2c_device_config_t\s+\w+\s*=\s*\{([^{}]*)\}',clean,re.S):
+        length=re.search(r'\.dev_addr_length\s*=\s*I2C_ADDR_BIT_LEN_(7|10)\b',m[1])
+        address_bits=int(length[1]) if length else None
         for field,kind in (('device_address','i2c_address'),('scl_speed_hz','i2c_clock')):
             match=re.search(r'\.'+field+r'\s*=\s*([\w]+)',m[1])
             if match:
                 value=match.group(1)
-                findings.append(dict(type=kind,line=clean.count('\n',0,m.start())+1,
-                                     excerpt=m[0][:500],arguments=[value],values=[number(value)],
-                                     source_api='ESP-IDF i2c_device_config_t designated initializer'))
+                finding=dict(type=kind,line=clean.count('\n',0,m.start())+1,
+                             excerpt=m[0][:500],arguments=[value],values=[number(value)],
+                             source_api='ESP-IDF i2c_device_config_t designated initializer')
+                if kind=='i2c_address':finding['address_bits']=address_bits
+                findings.append(finding)
     if 'Wire.beginTransmission' in clean and not re.search(r'\bWire\.begin\s*\(',clean):
         findings.append(dict(type='missing_init',line=1,excerpt='No Wire.begin call found in this file; initialization may occur elsewhere'))
     for m in re.finditer(r'^\s*Wire\.endTransmission\s*\([^)]*\)\s*;',clean,re.M):
@@ -130,8 +134,10 @@ def firmware(text):
         values=finding.get('values',[])
         if finding['type']=='i2c_begin' and len(values) in (2,3) and values[0] is not None and values[0]==values[1]:
             extra.append(dict(type='pin_conflict',line=finding['line'],excerpt=finding['excerpt'],explanation='The recognized master-mode call assigns SDA and SCL to the same pin. Verify the intended Wire.begin overload and board mapping.'))
-        if finding['type']=='i2c_address' and values and values[0] is not None and not 0<=values[0]<=127:
-            extra.append(dict(type='invalid_address',line=finding['line'],excerpt=finding['excerpt'],explanation='The literal target is outside the seven-bit address range. Check whether an eight-bit transfer byte was used instead of a seven-bit address.'))
+        if finding['type']=='i2c_address' and values and values[0] is not None:
+            width=finding.get('address_bits',7)
+            if width in (7,10) and not 0<=values[0]<(1<<width):
+                extra.append(dict(type='invalid_address',line=finding['line'],excerpt=finding['excerpt'],explanation=f'The literal target is outside the configured {width}-bit address range. Verify the intended address representation.'))
     findings.extend(extra)
     functions=re.findall(r'\b(?:void|int|bool|float|double|uint\d+_t)\s+(\w+)\s*\([^;{}]*\)\s*\{',clean)
     return dict(kind='firmware',method='Bounded Arduino C/C++ pattern analysis; no execution or full AST/type resolution',functions=functions,findings=findings)

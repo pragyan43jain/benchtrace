@@ -12,7 +12,12 @@ def diagnose(files, tests=None, problem=""):
         a=f['analysis']
         for x in a.get('findings',[]):
             if x['type']=='i2c_address' and x['values'] and x['values'][0] is not None:
-                addresses.append((x['values'][0],citation(f,x['excerpt'],line=x['line'])))
+                idf=x.get('source_api','').startswith('ESP-IDF')
+                # Address comparisons against extracted datasheet statements
+                # are seven-bit rules; an IDF 10-bit or unspecified width is
+                # not comparable and must not create a mismatch hypothesis.
+                if not idf or x.get('address_bits')==7:
+                    addresses.append((x['values'][0],citation(f,x['excerpt'],line=x['line'])))
             if x['type']=='i2c_begin' and len(x.get('values',[])) in (2,3): pins.append((x.get('values',[]),citation(f,x['excerpt'],line=x['line'])))
             if x['type']=='i2c_clock' and x.get('values') and x['values'][0]:clocks.append((x['values'][0],citation(f,x['excerpt'],line=x['line'])))
             if x['type'] in ('missing_init','pin_conflict'):missing.append(citation(f,x['excerpt'],line=x['line']))

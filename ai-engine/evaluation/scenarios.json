@@ -61,5 +61,12 @@
     "document": "7-bit I2C address: 0x48",
     "expected_first": "address",
     "expected_contradiction": false
+  },
+  {
+    "name": "esp_idf_ten_bit_not_compared_to_seven_bit_datasheet",
+    "firmware": "const i2c_device_config_t d = {.dev_addr_length=I2C_ADDR_BIT_LEN_10,.device_address=0x1FF,.scl_speed_hz=100000};",
+    "document": "7-bit I2C address: 0x48",
+    "expected_first": null,
+    "expected_contradiction": false
   }
 ]
