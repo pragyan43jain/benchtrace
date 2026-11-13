@@ -79,6 +79,7 @@ def main():
     assert c.request(root)['project']['preferences']['baud']==9600
     c.upload(project,demo/'initial-evidence.zip');c.upload(project,demo/'sensor-symbols.kicad_sch','schematic');c.upload(project,demo/'sensor-datasheet.txt','datasheet')
     c.upload(project,demo/'sensor-model.pdf','datasheet')
+    c.upload(project,demo/'sensor-model-scan.pdf','datasheet')
     c.upload(project,demo/'verification.csv','measurement')
     with tempfile.TemporaryDirectory(prefix='benchtrace-i2c-') as directory:
         ten_bit_path=Path(directory)/'ten-bit-capture.csv'
@@ -88,7 +89,7 @@ def main():
     while time.monotonic()<deadline:
         files=c.request(root)['files']
         if any(f['status']=='failed' for f in files):raise AssertionError(files)
-        if len(files)==10 and all(f['status']=='ready' for f in files):break
+        if len(files)==11 and all(f['status']=='ready' for f in files):break
         time.sleep(2)
     else:raise AssertionError('Processing timeout')
     wave=next(f for f in files if f['name']=='failure.csv')
@@ -113,6 +114,12 @@ def main():
     assert comparison['rmse_v']==0
     pdf=next(f for f in files if f['name']=='sensor-model.pdf')
     assert c.request(root+'/files/'+pdf['id'])['analysis']['chunks'][0]['page']==1
+    scanned_pdf=next(f for f in files if f['name']=='sensor-model-scan.pdf')
+    scanned_analysis=c.request(root+'/files/'+scanned_pdf['id'])['analysis']
+    assert scanned_analysis['ocr_pages']==[1]
+    assert any('0x48' in chunk['content'] and 'OCR-derived' in chunk['content'] for chunk in scanned_analysis['chunks'])
+    scanned_search=c.request(root+'/search',{'query':'What I2C address is printed in the scanned model?'})
+    assert any(x['source']=='sensor-model-scan.pdf' and 'OCR-derived' in x['content'] for x in scanned_search['evidence'])
     search=c.request(root+'/search',{'query':'What is the sensor I2C address?'})
     assert any('0x48' in x['content'] for x in search['evidence'])
     i=c.request(root+'/investigations',{'problem':'SIMULATED ESP32 sensor transaction returns NACK'},expected=201)['id'];ir=root+'/investigations/'+i

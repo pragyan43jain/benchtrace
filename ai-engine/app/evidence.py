@@ -1,7 +1,10 @@
 """Conservative extraction: source locations are retained, scope is explicit."""
 import re
 import hashlib
+import io
 import math
+import os
+import subprocess
 from pathlib import Path
 import sexpdata
 from pypdf import PdfReader
@@ -25,8 +28,73 @@ def embed(text):
     from .retrieval import semantic_embed
     return semantic_embed(text)
 
+def _ocr_pdf_pages(path, page_indices):
+    """OCR a bounded set of image-only PDF pages in the isolated parser worker."""
+    if not page_indices:
+        return {}, []
+    try:
+        import pypdfium2 as pdfium
+    except ImportError as exc:
+        raise ValueError('PDF rendering for OCR is unavailable in this build') from exc
+    try:
+        pdf = pdfium.PdfDocument(str(path))
+    except Exception as exc:
+        raise ValueError('Scanned PDF could not be rendered for OCR') from exc
+    extracted = {}
+    failed = []
+    try:
+        for page_index in page_indices:
+            page = None
+            bitmap = None
+            image = None
+            try:
+                page = pdf[page_index]
+                width, height = page.get_size()
+                if not math.isfinite(width) or not math.isfinite(height) or width <= 0 or height <= 0:
+                    failed.append(page_index + 1)
+                    continue
+                scale = min(200 / 72, 3200 / max(width, height), math.sqrt(9_000_000 / (width * height)))
+                bitmap = page.render(scale=scale, grayscale=True, limit_image_cache=True)
+                image = bitmap.to_pil()
+                png = io.BytesIO()
+                image.save(png, format='PNG')
+                result = subprocess.run(
+                    ['tesseract', 'stdin', 'stdout', '-l', 'eng', '--oem', '1', '--psm', '6'],
+                    input=png.getvalue(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=8, check=False,
+                    env={'PATH': os.environ.get('PATH', ''), 'OMP_THREAD_LIMIT': '1'},
+                )
+                if result.returncode == 0:
+                    text = result.stdout.decode('utf-8', errors='replace')[:100_000].strip()
+                    if text:
+                        extracted[page_index] = text
+                    else:
+                        failed.append(page_index + 1)
+                else:
+                    failed.append(page_index + 1)
+            except subprocess.TimeoutExpired:
+                failed.append(page_index + 1)
+            except FileNotFoundError as exc:
+                raise ValueError('Tesseract OCR is unavailable in this build') from exc
+            except Exception:
+                failed.append(page_index + 1)
+            finally:
+                if image is not None:
+                    image.close()
+                if bitmap is not None:
+                    bitmap.close()
+                if page is not None:
+                    page.close()
+    finally:
+        pdf.close()
+    return extracted, failed
+
 
 def document(path):
+    ocr_pages=set()
+    ocr_attempted_pages=[]
+    ocr_failed_pages=[]
+    ocr_pages_omitted=False
     if path.suffix.lower()=='.pdf':
         reader=PdfReader(path)
         if len(reader.pages)>300: raise ValueError('PDF exceeds 300 pages')
@@ -35,20 +103,39 @@ def document(path):
             text=p.extract_text() or '';total+=len(text)
             if total>2_000_000:raise ValueError('Document exceeds two million extracted characters')
             pages.append(text)
+        scanned_indices=[i for i,text in enumerate(pages) if len(text.strip())<24]
+        ocr_candidates=scanned_indices[:6]
+        ocr_text,ocr_failed_pages=_ocr_pdf_pages(path,ocr_candidates)
+        for index,text in ocr_text.items():
+            pages[index]=(pages[index].strip()+'\n'+text).strip()
+        ocr_pages={index+1 for index in ocr_text}
+        ocr_attempted_pages=[index+1 for index in ocr_candidates]
+        ocr_pages_omitted=len(scanned_indices)>len(ocr_candidates)
     else: pages=[path.read_text(encoding='utf-8')]
     if sum(map(len,pages))>2_000_000:raise ValueError('Document exceeds two million extracted characters')
     chunks=[];specs=[];structured=[]
     for page,text in enumerate(pages,1):
-        structured.extend(characteristics(text,page))
+        page_characteristics=characteristics(text,page)
+        if page in ocr_pages:
+            for item in page_characteristics:
+                item['classification']='OCR-derived statement; verify the transcription and exact-part applicability against the source page'
+        structured.extend(page_characteristics)
         for offset in range(0,len(text),1200):
             content=text[offset:offset+1400]
-            if content.strip(): chunks.append(dict(page=page,content=content,embedding=embed(content)))
+            if content.strip():
+                if page in ocr_pages:
+                    content='[OCR-derived text; verify against the original page image.]\n'+content
+                chunks.append(dict(page=page,content=content,embedding=embed(content)))
         # Preserve whole excerpts rather than asserting a value's electrical meaning.
         for line in text.splitlines():
             if re.search(r'(?i)(0x[0-9a-f]{2}|\b\d+(?:\.\d+)?\s*(?:V|kHz|MHz|ns|µs|mA)\b|SDA|SCL|I2C|UART|SPI)',line):
-                specs.append(dict(page=page,excerpt=line[:600],classification='documented excerpt; applicability unverified'))
-    if not chunks: raise ValueError('No extractable text; scanned PDFs require OCR (not supported)')
-    return dict(kind='document',embedding_version=embedding_version(),pages=len(pages),chunks=chunks,specifications=specs[:200],characteristics=structured[:1000],extraction_limits={'specification_excerpts_truncated':len(specs)>200,'characteristics_truncated':len(structured)>1000},summary='\n'.join(pages[0].splitlines()[:8])[:1000],summary_method='Extractive first-page excerpt')
+                classification='OCR-derived excerpt; verify against the original page image' if page in ocr_pages else 'documented excerpt; applicability unverified'
+                specs.append(dict(page=page,excerpt=line[:600],classification=classification))
+    if not chunks: raise ValueError('No extractable text after PDF text/OCR extraction or empty document')
+    extraction_method='PDF text extraction'
+    if ocr_attempted_pages:
+        extraction_method+=' with bounded English OCR for scan-only pages; OCR text requires source verification'
+    return dict(kind='document',method=extraction_method,embedding_version=embedding_version(),pages=len(pages),chunks=chunks,specifications=specs[:200],characteristics=structured[:1000],extraction_limits={'specification_excerpts_truncated':len(specs)>200,'characteristics_truncated':len(structured)>1000,'ocr_pages_omitted':ocr_pages_omitted,'ocr_pages_omitted_count':max(0,len(scanned_indices)-len(ocr_attempted_pages)) if path.suffix.lower()=='.pdf' else 0,'ocr_failed_pages':ocr_failed_pages},ocr_pages=sorted(ocr_pages),ocr_attempted_pages=ocr_attempted_pages,summary='\n'.join(pages[0].splitlines()[:8])[:1000],summary_method='Extractive first-page excerpt; OCR-derived text requires source verification' if 1 in ocr_pages else 'Extractive first-page excerpt')
 
 
 def firmware(text):

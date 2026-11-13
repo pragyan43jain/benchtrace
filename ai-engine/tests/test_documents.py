@@ -1,4 +1,6 @@
 from pathlib import Path
+from io import BytesIO
+from PIL import Image,ImageDraw,ImageFont
 import pytest
 from app.evidence import document,schematic
 
@@ -12,6 +14,25 @@ def pdf_bytes(text):
     for x in offsets:out+=f'{x:010d} 00000 n \n'.encode()
     return out+f'trailer\n<< /Root 1 0 R /Size 6 >>\nstartxref\n{offset}\n%%EOF'.encode()
 
+def image_only_pdf_bytes(text):
+    image=Image.new('RGB',(1800,500),'white')
+    ImageDraw.Draw(image).text((45,180),text,fill='black',font=ImageFont.load_default(size=64))
+    encoded=BytesIO();image.save(encoded,format='JPEG',quality=95);image.close()
+    jpeg=encoded.getvalue()
+    stream=b'q 900 0 0 250 0 0 cm /Im0 Do Q'
+    objects=[
+        b'<< /Type /Catalog /Pages 2 0 R >>',
+        b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 900 250] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>',
+        b'<< /Type /XObject /Subtype /Image /Width 1800 /Height 500 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+str(len(jpeg)).encode()+b' >>\nstream\n'+jpeg+b'\nendstream',
+        b'<< /Length '+str(len(stream)).encode()+b' >>\nstream\n'+stream+b'\nendstream',
+    ]
+    out=b'%PDF-1.4\n';offsets=[]
+    for i,obj in enumerate(objects,1):offsets.append(len(out));out+=f'{i} 0 obj\n'.encode()+obj+b'\nendobj\n'
+    offset=len(out);out+=b'xref\n0 6\n0000000000 65535 f \n'
+    for value in offsets:out+=f'{value:010d} 00000 n \n'.encode()
+    return out+f'trailer\n<< /Root 1 0 R /Size 6 >>\nstartxref\n{offset}\n%%EOF'.encode()
+
 def test_pdf_text_and_citation(tmp_path,monkeypatch):
     monkeypatch.setenv('EMBEDDING_MODE','lexical')
     p=tmp_path/'model.pdf';p.write_bytes(pdf_bytes('SIMULATED sensor I2C address: 0x48'))
@@ -19,6 +40,36 @@ def test_pdf_text_and_citation(tmp_path,monkeypatch):
     assert a['pages']==1 and a['chunks'][0]['page']==1
     assert '0x48' in a['chunks'][0]['content']
     assert len(a['chunks'][0]['embedding'])==384
+
+def test_image_only_pdf_uses_bounded_ocr_and_marks_evidence_unverified(tmp_path,monkeypatch):
+    monkeypatch.setenv('EMBEDDING_MODE','lexical')
+    p=tmp_path/'scanned-datasheet.pdf';p.write_bytes(image_only_pdf_bytes('I2C ADDRESS 0x48'))
+    result=document(p)
+    assert result['ocr_pages']==[1] and result['ocr_attempted_pages']==[1]
+    assert 'OCR' in result['method'] and 'requires source verification' in result['method']
+    assert '0x48' in result['chunks'][0]['content']
+    assert result['chunks'][0]['content'].startswith('[OCR-derived text; verify against the original page image.]')
+    assert any('OCR-derived' in item['classification'] for item in result['specifications'])
+
+def test_ocr_page_limit_and_failed_pages_are_reported(tmp_path,monkeypatch):
+    class Page:
+        def __init__(self,text):self.text=text
+        def extract_text(self):return self.text
+    class Reader:
+        pages=[Page('SIMULATED datasheet with extractable text')]+[Page('') for _ in range(7)]
+    attempted=[]
+    def bounded_ocr(path,indices):
+        attempted.extend(indices)
+        return {},[index+1 for index in indices]
+    monkeypatch.setenv('EMBEDDING_MODE','lexical')
+    monkeypatch.setattr('app.evidence.PdfReader',lambda path:Reader())
+    monkeypatch.setattr('app.evidence._ocr_pdf_pages',bounded_ocr)
+    p=tmp_path/'many-scan-pages.pdf';p.write_bytes(b'%PDF-fake; mocked reader')
+    result=document(p)
+    assert attempted==list(range(1,7))
+    assert result['ocr_attempted_pages']==list(range(2,8))
+    assert result['extraction_limits']['ocr_pages_omitted_count']==1
+    assert result['extraction_limits']['ocr_failed_pages']==list(range(2,8))
 
 def test_blank_document_rejected(tmp_path):
     p=tmp_path/'empty.txt';p.write_text('   ')

@@ -3,6 +3,19 @@ export function Evidence({ analysis: a }: { analysis: any }) {
   return (
     <>
       <p className="muted">{a.method || a.scope || a.summary_method}</p>
+      {a.ocr_attempted_pages?.length > 0 && (
+        <p className="warning">
+          English OCR was attempted on PDF pages {a.ocr_attempted_pages.join(", ")}.
+          Recognized pages: {a.ocr_pages?.length ? a.ocr_pages.join(", ") : "none"}.
+          Verify every OCR excerpt against the original page image.
+          {a.extraction_limits?.ocr_failed_pages?.length
+            ? ` OCR could not recover text from pages ${a.extraction_limits.ocr_failed_pages.join(", ")}.`
+            : ""}
+          {a.extraction_limits?.ocr_pages_omitted_count
+            ? ` OCR was limited to six scan-only pages; ${a.extraction_limits.ocr_pages_omitted_count} additional pages were not processed.`
+            : ""}
+        </p>
+      )}
       {a.kind === "firmware" ? (
         <>
           <h3>Functions</h3>

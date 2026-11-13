@@ -39,7 +39,7 @@ flowchart LR
   Python --> Retrieval[Local semantic embeddings]
 ```
 
-Frontend: React, TypeScript, Vite, Tailwind, source-owned shadcn-style Radix components, Lucide, Recharts and uPlot. Backend: Go, PostgreSQL/pgvector and Redis. Engine: Python, FastAPI, Pydantic, NumPy, SciPy, Pandas, pypdf and FastEmbed. Infrastructure: Docker Compose and GitHub Actions. See [ARCHITECTURE.md](ARCHITECTURE.md), [API.md](API.md), and [DATABASE.md](DATABASE.md).
+Frontend: React, TypeScript, Vite, Tailwind, source-owned shadcn-style Radix components, Lucide, Recharts and uPlot. Backend: Go, PostgreSQL/pgvector and Redis. Engine: Python, FastAPI, Pydantic, NumPy, SciPy, Pandas, pypdf, pypdfium2, Tesseract and FastEmbed. Infrastructure: Docker Compose and GitHub Actions. See [ARCHITECTURE.md](ARCHITECTURE.md), [API.md](API.md), and [DATABASE.md](DATABASE.md).
 
 ## Run locally
 
@@ -67,6 +67,7 @@ BENCHTRACE_VERSION=v0.1.5-rc.1 docker compose -f compose.yaml -f compose.publish
 ## Reproduce the ESP32 I2C failure
 
 ```sh
+python3 -m pip install -r demo/requirements.txt
 python3 demo/generate.py
 ```
 
@@ -83,7 +84,7 @@ The sensor model, bus capture and serial output are fictional, reproducible fixt
 
 | Input | Supported behavior |
 |---|---|
-| PDF, TXT, JSON | Text extraction, page citations where available, semantic retrieval; no OCR |
+| PDF, TXT, JSON | Text extraction, page citations and semantic retrieval; English OCR for up to six scan-only pages per PDF. OCR excerpts are marked unverified and must be checked against the page image |
 | CSV | `time` in seconds, finite numeric channel values in volts, strictly increasing samples |
 | C/C++/INO/H/HPP | Bounded Arduino `Wire` and ESP-IDF designated I2C configuration analysis; no compilation/execution |
 | KiCad `.net` | Exported S-expression components, pins and net connectivity |

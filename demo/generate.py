@@ -3,6 +3,8 @@ from pathlib import Path
 import csv
 import json
 import zipfile
+from io import BytesIO
+
 def pdf_bytes(text):
     escaped=text.replace('\\','\\\\').replace('(','\\(').replace(')','\\)')
     stream=f'BT /F1 12 Tf 50 700 Td ({escaped}) Tj ET'.encode()
@@ -11,6 +13,27 @@ def pdf_bytes(text):
     for i,obj in enumerate(objects,1):offsets.append(len(out));out+=f'{i} 0 obj\n'.encode()+obj+b'\nendobj\n'
     offset=len(out);out+=b'xref\n0 6\n0000000000 65535 f \n'
     for x in offsets:out+=f'{x:010d} 00000 n \n'.encode()
+    return out+f'trailer\n<< /Root 1 0 R /Size 6 >>\nstartxref\n{offset}\n%%EOF'.encode()
+
+def scanned_pdf_bytes(lines):
+    from PIL import Image,ImageDraw,ImageFont
+    image=Image.new('RGB',(1800,500),'white')
+    draw=ImageDraw.Draw(image)
+    font=ImageFont.load_default(size=58)
+    for index,line in enumerate(lines):draw.text((55,30+index*115),line,fill='black',font=font)
+    encoded=BytesIO();image.save(encoded,format='JPEG',quality=95);image.close()
+    jpeg=encoded.getvalue();stream=b'q 900 0 0 250 0 0 cm /Im0 Do Q'
+    objects=[
+        b'<< /Type /Catalog /Pages 2 0 R >>',
+        b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 900 250] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>',
+        b'<< /Type /XObject /Subtype /Image /Width 1800 /Height 500 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+str(len(jpeg)).encode()+b' >>\nstream\n'+jpeg+b'\nendstream',
+        b'<< /Length '+str(len(stream)).encode()+b' >>\nstream\n'+stream+b'\nendstream',
+    ]
+    out=b'%PDF-1.4\n';offsets=[]
+    for i,obj in enumerate(objects,1):offsets.append(len(out));out+=f'{i} 0 obj\n'.encode()+obj+b'\nendobj\n'
+    offset=len(out);out+=b'xref\n0 6\n0000000000 65535 f \n'
+    for value in offsets:out+=f'{value:010d} 00000 n \n'.encode()
     return out+f'trailer\n<< /Root 1 0 R /Size 6 >>\nstartxref\n{offset}\n%%EOF'.encode()
 
 root=Path(__file__).parent/'esp32-i2c'
@@ -28,6 +51,12 @@ def capture(address,ack,path):
         for i,(scl,sda) in enumerate(samples):writer.writerow([f'{i*0.5e-6:.9f}',scl,sda])
 
 (root/'sensor-model.pdf').write_bytes(pdf_bytes('SIMULATED MODEL ONLY - 7-bit I2C address: 0x48. No physical sensor specification.'))
+(root/'sensor-model-scan.pdf').write_bytes(scanned_pdf_bytes([
+    'SIMULATED MODEL ONLY',
+    '7-bit I2C address: 0x48',
+    'Not a manufacturer datasheet',
+    'No physical sensor specification',
+]))
 
 capture(0x49,False,root/'failure.csv')
 capture(0x48,True,root/'verification.csv')

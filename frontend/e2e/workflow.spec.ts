@@ -78,6 +78,23 @@ test("complete engineering investigation in the browser", async ({ page }) => {
       .locator(".file-list button")
       .filter({ hasText: "sensor-datasheet.txt" }),
   ).toContainText("ready", { timeout: 120000 });
+  await page
+    .getByLabel("Evidence file")
+    .setInputFiles(path.join(demo, "sensor-model-scan.pdf"));
+  await page.getByRole("button", { name: "Upload evidence" }).click();
+  await expect(
+    page.getByText("Evidence uploaded. Processing has started."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  const scannedDatasheet = page
+    .locator(".file-list button")
+    .filter({ hasText: "sensor-model-scan.pdf" });
+  await expect(scannedDatasheet).toContainText("ready", { timeout: 120000 });
+  await scannedDatasheet.click();
+  await expect(
+    page.getByText(/English OCR was attempted on PDF pages 1/),
+  ).toBeVisible();
+  await expect(page.getByText(/Verify every OCR excerpt/)).toBeVisible();
   await page.getByLabel("Evidence category").selectOption("schematic");
   await page
     .getByLabel("Evidence file")
