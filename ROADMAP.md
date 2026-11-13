@@ -128,3 +128,7 @@ Full workflow **43388763329** passed on `67cbaf1`: Go race/vet, frontend build/u
 Added `compose.published.yaml` to replace local `build` entries with versioned GHCR images while reusing the same health checks, networks, storage, secrets and resource limits. Added `BENCHTRACE_PORT` so isolated deployments can use a separate loopback port. Compose config validation confirms all three services resolve to `v0.1.2-rc.1` images with no build contexts.
 
 Pulled all services and dependencies, started an isolated published-image stack on port 8081, and verified API health, API integration, negative security integration, and all **4 Playwright tests** against those published containers. The stack was stopped and its test volumes removed. This verifies local deployment from registry images; it is not public cloud hosting. Full CI run **43390628067** passed on the Compose overlay commit, including Go race/vet, frontend build/unit/audit, engine tests, API/security integration and all four Playwright tests. The CI job also validates that the published overlay resolves three GHCR images without build contexts.
+
+## Milestone 20 — Node 24 CI runtime
+
+Updated checkout, Go setup, Node setup and artifact upload actions to their current Node 24 releases. Full CI run **43391406460** passed with the updated actions: Go race/vet, frontend build/unit/audit, all 68 engine tests, API/security integration, published-image Compose validation and all four Playwright tests. The full run no longer emits the prior Node 20 action deprecation warnings.
