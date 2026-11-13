@@ -29,6 +29,24 @@ def test_schematic_scope():
     assert a['components'][0]['reference']=='U1'
     assert a['nets'][0]['nodes']==[] and 'only' in a['scope']
 
+def test_schematic_extracts_library_pin_metadata_without_claiming_connectivity():
+    text='''(kicad_sch
+      (lib_symbols (symbol "Sensor:TMP" (symbol "TMP_0_1"
+        (pin input line (name "SDA") (number "1"))
+        (pin input line (name "SCL") (number "2")))))
+      (symbol (lib_id "Sensor:TMP") (property "Reference" "U2")
+        (property "Value" "TMP") (instances (project "demo" (path "/x"
+          (reference "U2") (unit 1)))))
+      (label "I2C_SDA"))'''
+    result=schematic(text)
+    component=result['components'][0]
+    assert component['library_id']=='Sensor:TMP'
+    assert component['pins']==[
+        {'number':'1','name':'SDA','electrical_type':'input'},
+        {'number':'2','name':'SCL','electrical_type':'input'}]
+    assert result['nets'][0]['nodes']==[]
+    assert 'not inferred' in result['scope']
+
 def test_structured_characteristics_preserve_limits():
     from app.specifications import characteristics
     r=characteristics('Recommended operating supply voltage: 2.7 to 3.6 V\nAbsolute maximum voltage: 5.5 V\nMaximum I2C clock frequency: 400 kHz\n1 VDD Power supply\n2 SDA Serial data',3)

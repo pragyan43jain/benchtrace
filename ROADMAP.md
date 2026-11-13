@@ -63,3 +63,7 @@ Added fixed scenarios for chained address constants, strap-dependent alternate a
 ## Milestone 6 — verification feedback in the investigation UI
 
 Recording a user test now immediately reruns the diagnosis using the selected evidence and saved test observations, then reloads hypothesis ranking and status. The UI displays the ranking method and identifies test observations as user-recorded evidence. Local production build and Vitest pass; focused Playwright investigation regression passes against the rebuilt web container. The first UI commit CI run 43375259585 failed because its E2E selector used the old disclosure label. The updated test and UI passed full browser CI in run 43375475924. The full master audit remains open.
+
+## Milestone 7 — KiCad symbol pin metadata
+
+Extended `.kicad_sch` extraction to read embedded library symbol pin numbers, names, and declared electrical pin types for recognized component symbols. This metadata is explicitly not treated as net connectivity; exported `.net` remains the source for reliable pin-to-net relationships. Added a fixture covering extraction and the no-connectivity boundary. Verification: engine suite **58 passed** (one upstream Starlette/httpx deprecation warning); API integration and security integration both passed. A direct host Python test attempt failed during collection because the host interpreter lacks the engine package; passing tests used the pinned Compose engine environment.

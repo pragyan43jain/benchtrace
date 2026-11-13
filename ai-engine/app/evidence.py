@@ -135,12 +135,35 @@ def schematic(text):
             nets.append(dict(name=str(name[1]) if name else '',nodes=nodes))
         scope='KiCad exported netlist connectivity; no inferred physical assembly or electrical behavior'
     else:
+        # KiCad embeds library symbol definitions in the schematic. Their pins
+        # describe symbol metadata; without wire geometry/net assignment they
+        # do not establish electrical connectivity.
+        def descendants(x, key):
+            if not isinstance(x, list): return []
+            found = [x] if tag(x) == key else []
+            for value in x[1:]: found.extend(descendants(value, key))
+            return found
+        libraries={}
+        lib_root=one(tree,'lib_symbols')
+        for definition in children(lib_root or [],'symbol'):
+            lib_id=str(definition[1]) if len(definition)>1 else ''
+            pins=[]
+            for pin in descendants(definition,'pin'):
+                name,number=one(pin,'name'),one(pin,'number')
+                if name and number and len(name)>1 and len(number)>1:
+                    kind=str(pin[1]) if len(pin)>1 else ''
+                    pins.append(dict(number=str(number[1]),name=str(name[1]),electrical_type=kind))
+            libraries[lib_id]=pins
         for symbol in children(tree,'symbol'):
             props={str(p[1]):str(p[2]) for p in children(symbol,'property') if len(p)>=3}
-            if 'Reference' in props: components.append(dict(reference=props['Reference'],value=props.get('Value',''),properties=props))
+            lib_id=one(symbol,'lib_id')
+            if 'Reference' in props:
+                components.append(dict(reference=props['Reference'],value=props.get('Value',''),properties=props,
+                                       library_id=str(lib_id[1]) if lib_id and len(lib_id)>1 else '',
+                                       pins=libraries.get(str(lib_id[1]),[]) if lib_id and len(lib_id)>1 else []))
         for key in ('label','global_label','hierarchical_label'):
             for label in children(tree,key): nets.append(dict(name=str(label[1]),nodes=[]))
-        scope='KiCad symbol and label extraction only. Export a KiCad S-expression .net file for reliable pin connectivity.'
+        scope='KiCad symbol properties and embedded pin name/number metadata plus labels. Pin connectivity is not inferred; export a KiCad S-expression .net file for reliable net connectivity.'
     for n in nets: n['power_or_ground']=bool(re.search(r'(?i)(GND|VCC|VDD|3V3|5V)',n['name']))
     return dict(kind='circuit',components=components,nets=nets,scope=scope)
 
