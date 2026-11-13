@@ -38,7 +38,7 @@ jobs:
       - run: python3 scripts/setup-env.py && docker compose build && docker compose up -d
       - name: Validate published-image Compose overlay
         run: |
-          BENCHTRACE_VERSION=v0.1.2-rc.1 docker compose -f compose.yaml -f compose.published.yaml config --format json | python3 -c 'import json,sys; services=json.load(sys.stdin)["services"]; expected={"api":"ghcr.io/pragyan43jain/benchtrace-backend:v0.1.2-rc.1","engine":"ghcr.io/pragyan43jain/benchtrace-ai-engine:v0.1.2-rc.1","web":"ghcr.io/pragyan43jain/benchtrace-frontend:v0.1.2-rc.1"}; assert all(services[name].get("image")==image and "build" not in services[name] for name,image in expected.items())'
+          BENCHTRACE_VERSION=v0.1.3-rc.1 docker compose -f compose.yaml -f compose.published.yaml config --format json | python3 -c 'import json,sys; services=json.load(sys.stdin)["services"]; expected={"api":"ghcr.io/pragyan43jain/benchtrace-backend:v0.1.3-rc.1","engine":"ghcr.io/pragyan43jain/benchtrace-ai-engine:v0.1.3-rc.1","web":"ghcr.io/pragyan43jain/benchtrace-frontend:v0.1.3-rc.1"}; assert all(services[name].get("image")==image and "build" not in services[name] for name,image in expected.items())'
       - name: Wait for API
         run: |
           for i in $(seq 1 60); do
