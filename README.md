@@ -96,7 +96,7 @@ Limits: 10 MiB per file, 30 MiB per upload/extracted archive, 100 ZIP entries, 2
 
 ## Optional provider
 
-The default workflow runs locally. Administrators can set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` for a compatible chat-completions provider, then recreate the engine service. Settings includes **Test provider connection**; it sends only a fixed synthetic citation marker, never project files, and is limited to three checks per minute. Retrieved excerpts will be sent to the configured provider for citation selection. Returned IDs must refer to existing evidence; the provider cannot insert technical claims or new measurements. Never put provider credentials in frontend code.
+The default workflow runs locally. Administrators can set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` for a compatible chat-completions provider, then recreate the engine service. Settings includes **Test provider connection**; it sends only a fixed synthetic citation marker, never project files, and is limited to three checks per account per minute. Retrieved excerpts will be sent to the configured provider for citation selection. Returned IDs must refer to existing evidence; the provider cannot insert technical claims or new measurements. Never put provider credentials in frontend code.
 
 ## Development and verification
 

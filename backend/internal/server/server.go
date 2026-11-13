@@ -126,10 +126,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 			}
 			limit := int64(600)
 			bucket := "api"
-			if r.URL.Path == "/api/config/provider-test" && r.Method == "POST" {
-				limit = 3
-				bucket = "provider-test"
-			} else if strings.HasPrefix(r.URL.Path, "/api/auth/") && r.Method != "GET" {
+			if strings.HasPrefix(r.URL.Path, "/api/auth/") && r.Method != "GET" {
 				limit = 20
 				bucket = "auth"
 			}

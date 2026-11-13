@@ -4,6 +4,7 @@ import (
 	"benchtrace/internal/auth"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func (s *Server) configuration(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +16,17 @@ func (s *Server) configuration(w http.ResponseWriter, r *http.Request) {
 	respond(w, 200, out)
 }
 func (s *Server) providerTest(w http.ResponseWriter, r *http.Request) {
+	key := "rate:provider-test:" + user(r) + ":" + time.Now().UTC().Format("200601021504")
+	count, err := s.Redis.Eval(r.Context(), "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],120) end; return n", []string{key}).Int64()
+	if err != nil {
+		fail(w, 503, "Provider connection limiter unavailable")
+		return
+	}
+	if count > 3 {
+		w.Header().Set("Retry-After", "60")
+		fail(w, 429, "Provider connection check limit reached; retry in one minute")
+		return
+	}
 	var out map[string]any
 	if e := s.engine(r.Context(), "/provider/test", map[string]any{}, &out); e != nil {
 		fail(w, 502, "Provider connection check unavailable")
