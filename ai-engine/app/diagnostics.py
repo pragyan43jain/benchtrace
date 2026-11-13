@@ -42,11 +42,18 @@ def diagnose(files, tests=None, problem=""):
                     item=(frame['address'],citation(f,f"Decoded 7-bit address 0x{frame['address']:02x}: {'ACK' if frame['bytes'][0]['ack'] else 'NACK'}",time=frame['start']))
                     (acks if frame['bytes'][0]['ack'] else nacks).append(item)
     hypotheses=[]
+    safety_notes={
+        'address':'When probing the bus, use an instrument rated for the board voltage and avoid shorting adjacent pins. Power down before changing connections.',
+        'power':'Live voltage probing can damage equipment or injure the operator. Use an appropriately rated meter and probes, confirm the ground reference, and do not exceed documented limits.',
+        'pullups':'Disconnect power before measuring resistance or changing pull-ups. For powered waveform measurements, verify analyzer/probe voltage limits and ground reference first.',
+        'pins':'Disconnect power before continuity checks or rewiring. Avoid shorting pins; confirm the board and sensor voltage levels before powered measurements.',
+        'timing':'Before attaching probes, confirm voltage limits, ground reference and probe loading are suitable for the board and bus.'}
     def add(key,title,support,against,test,confirm,reject,unknowns):
         hypotheses.append(dict(key=key,title=title,supporting_evidence=support,contradictory_evidence=against,
             evidence_balance=len({x['file_id'] for x in support})-len({x['file_id'] for x in against}),
             ranking_method='Distinct supporting files minus distinct contradicting files; ties ordered by rule key. Not a probability.',
-            recommended_test=test,confirms_if=confirm,rejects_if=reject,unknowns=unknowns,status='unverified'))
+            recommended_test=test,confirms_if=confirm,rejects_if=reject,unknowns=unknowns,
+            safety_note=safety_notes[key],status='unverified'))
     mismatch=[];matching=[]
     docs={v for v,c in documented}
     for addr,cite in addresses:

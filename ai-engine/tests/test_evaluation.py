@@ -13,7 +13,7 @@ def test_fixed_diagnostic_scenarios(case):
     address=next(h for h in result['hypotheses'] if h['key']=='address')
     assert bool(address['contradictory_evidence'])==case['expected_contradiction']
     for h in result['hypotheses']:
-        assert h['status']=='unverified' and h['recommended_test'] and h['confirms_if'] and h['rejects_if'] and h['unknowns']
+        assert h['status']=='unverified' and h['recommended_test'] and h['confirms_if'] and h['rejects_if'] and h['unknowns'] and h['safety_note']
         assert 'probability' in h['ranking_method']
         for e in h['supporting_evidence']+h['contradictory_evidence']:
             assert e['file_id'] in ('fw','doc')

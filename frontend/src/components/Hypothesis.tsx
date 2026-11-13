@@ -56,6 +56,7 @@ export function Hypothesis({
           <FlaskConical size={13} /> NEXT VERIFICATION TEST
         </span>
         <p>{a.recommended_test}</p>
+        {a.safety_note && <p className="warning" role="note"><strong>Safety:</strong> {a.safety_note}</p>}
         <dl>
           <div>
             <dt>Confirms if</dt>

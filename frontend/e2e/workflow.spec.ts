@@ -158,6 +158,7 @@ test("complete engineering investigation in the browser", async ({ page }) => {
   await expect(page.locator(".hypothesis").first()).toContainText(
     "sensor-datasheet.txt",
   );
+  await expect(page.locator(".hypothesis").first()).toContainText("Safety:");
   await page.screenshot({
     path: "../docs/diagnostic-workspace.png",
     fullPage: false,

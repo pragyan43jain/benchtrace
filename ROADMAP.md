@@ -152,3 +152,7 @@ Published backend, frontend and AI-engine images for annotated tag `v0.1.3-rc.1`
 ## Milestone 25 — firmware function evidence
 
 Expanded bounded C/C++ function signature extraction to cover common project-defined return types, pointers/references and trailing return types. Function evidence now includes source lines and signatures; the firmware panel shows line locations and signature details on hover. Added regression coverage for custom types, prototypes, commented-out examples and source lines, plus browser assertions against the reproducible ESP32 demo. Verification: engine suite **81 passed** (one upstream Starlette/httpx deprecation warning), frontend build, 2 unit tests, npm audit (**0 vulnerabilities**), API integration, negative security checks and all **4 Playwright tests** passed against the rebuilt source stack. The workflow refreshed the diagnostic and waveform screenshots. Full CI for this milestone is pending.
+
+## Milestone 26 — safety guidance for verification tests
+
+Added hypothesis-specific safety notes for voltage probing, pull-up inspection, continuity checks, rewiring and analyzer connections. The diagnostic workspace displays the note with each recommended test, while the engine evaluation requires every hypothesis to include safety guidance. Verification: 81 engine tests, source API integration, negative security checks and all **4 Playwright tests** passed; full CI is pending.
