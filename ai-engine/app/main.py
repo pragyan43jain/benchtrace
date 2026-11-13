@@ -2,7 +2,7 @@ import os
 import secrets
 from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from .evidence import embed
 from .retrieval import embedding_version
 from .sandbox import isolated_process
@@ -22,6 +22,11 @@ class DiagnosticRequest(BaseModel):
     tests:list[dict]=Field(default_factory=list,max_length=1000)
 class EmbedRequest(BaseModel):
     text:str=Field(max_length=20000)
+class ProviderConfig(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    base_url:str=Field(default='',max_length=500)
+    model:str=Field(default='',max_length=200)
+    api_key:str=Field(default='',max_length=2048)
 
 @app.get('/health')
 def health():return {'status':'ok'}
@@ -37,14 +42,17 @@ def embedding(request:EmbedRequest):return {'embedding':embed(request.text),'met
 class AnswerRequest(BaseModel):
     question:str=Field(max_length=2000)
     evidence:list[dict]=Field(max_length=6)
+    provider:ProviderConfig|None=None
 @app.post('/answer',dependencies=[Depends(authorize)])
 def generate_answer(request:AnswerRequest):
     from .answers import answer
-    return answer(request.question,request.evidence)
+    return answer(request.question,request.evidence,request.provider.model_dump() if request.provider else None)
+class ProviderTestRequest(BaseModel):
+    provider:ProviderConfig|None=None
 @app.post('/provider/test',dependencies=[Depends(authorize)])
-def provider_test():
+def provider_test(request:ProviderTestRequest|None=None):
     from .answers import provider_connection_check
-    return provider_connection_check()
+    return provider_connection_check(request.provider.model_dump() if request and request.provider else None)
 @app.post('/config',dependencies=[Depends(authorize)])
 def config():return {'embedding_version':embedding_version(),'embedding_mode':os.getenv('EMBEDDING_MODE','semantic'),'model':'BAAI/bge-small-en-v1.5','provider_configured':bool(os.getenv('LLM_BASE_URL')),'diagnostics':'deterministic evidence rules','decoder_defaults':{'threshold':1.65,'baud':115200,'cpol':0,'cpha':0}}
 

@@ -14,12 +14,15 @@ PostgreSQL 17 with pgvector. SQL files in `backend/migrations/` are embedded int
 | measurement_files, measurement_results | Waveform metadata and successive analysis results |
 | components | Extracted component properties, references and file provenance |
 | knowledge_entries | Private project-linked report snapshots and semantic embeddings |
+| provider_settings | Per-account provider model and AES-GCM encrypted API key; the deployment-controlled endpoint is not stored per user |
 | project_events, schema_migrations | Project changes and checksum-verified migration history |
 | background_jobs | Durable queue state, attempt counter, errors and recovery timestamps |
 
 All IDs are generated UUIDv4. Foreign keys cascade where records cannot exist without their parent. Owner/project lookups, session expiry, queue state and document joins are indexed. Initial vector search is exact cosine distance, appropriate for bounded projects; add and evaluate approximate indexes only when corpus size justifies them. Large source binaries remain in the upload volume.
 
 Authorization is enforced in the API, including file, investigation and hypothesis relationships. PostgreSQL row-level security is not enabled; do not expose database credentials or direct query access to clients. The `project_members` table does not grant access in this release.
+
+Provider API keys are encrypted with AES-GCM before insertion. `PROVIDER_ENCRYPTION_KEY` is a deployment secret containing 32 random bytes encoded as 64 hexadecimal characters; ciphertext is authenticated against the owning user ID. Keep this key stable and backed up separately from PostgreSQL. Rotating or losing it makes saved account keys unreadable; users can remove and re-enter them after key rotation.
 
 ## Backup and restore
 

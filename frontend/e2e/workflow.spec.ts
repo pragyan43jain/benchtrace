@@ -208,6 +208,21 @@ test("complete engineering investigation in the browser", async ({ page }) => {
     fullPage: true,
   });
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByLabel("Provider model").fill("playwright-model");
+  await page.getByLabel("API key").fill("playwright-provider-secret");
+  await page.getByRole("button", { name: "Save provider settings" }).click();
+  await expect(page.getByText("Provider settings saved for your account.")).toBeVisible();
+  await expect(page.getByLabel("API key")).toHaveValue("");
+  await expect(page.getByLabel("API key")).toHaveAttribute(
+    "placeholder",
+    "Saved key present; leave blank to keep it",
+  );
+  await expect(page.locator("body")).not.toContainText("playwright-provider-secret");
+  await page.getByLabel("Remove my saved key").check();
+  await page.getByRole("button", { name: "Save provider settings" }).click();
+  await expect(page.getByText("Provider settings saved for your account.")).toBeVisible();
+  await expect(page.getByLabel("API key")).toHaveValue("");
+  await page.getByLabel("Remove my saved key").uncheck();
   await page.getByRole("button", { name: "Test provider connection" }).click();
   await expect(page.getByRole("status")).toContainText(
     /No compatible provider is configured|Provider connection check succeeded|Provider is configured, but the check failed/,

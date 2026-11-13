@@ -53,6 +53,16 @@ def main():
     assert provider_check['configured']==bool(config['provider_configured'])
     assert isinstance(provider_check['ok'],bool)
     assert 'api_key' not in json.dumps(provider_check).lower()
+    provider_secret='integration-provider-secret-'+stamp
+    provider_model='integration-model-'+stamp
+    provider=c.request('/config/provider',{'model':provider_model,'api_key':provider_secret},method='PUT')
+    assert provider['provider_model']==provider_model and provider['provider_key_set']
+    assert provider_secret not in json.dumps(provider).lower() and 'api_key' not in json.dumps(provider).lower()
+    assert provider_secret not in json.dumps(c.request('/config')).lower()
+    changed_provider=c.request('/config/provider',{'model':provider_model+'-updated'},method='PUT')
+    assert changed_provider['provider_model']==provider_model+'-updated' and changed_provider['provider_key_set']
+    cleared_provider=c.request('/config/provider',{'model':provider_model,'clear_api_key':True},method='PUT')
+    assert cleared_provider['provider_model']==provider_model
     assert list(c.jar) and all('HttpOnly' in x._rest for x in c.jar)
     c.request('/projects',{'name':''},expected=400)
     project=c.request('/projects',{'name':'SIMULATED ESP32 integration '+stamp,'platform':'ESP32','description':'Automated reproducible verification'},expected=201)['id']
@@ -61,6 +71,9 @@ def main():
     stranger=Client();stranger.request('/auth/register',{'email':f'other-{stamp}@example.test','password':'integration-passphrase-456','name':'Other Engineer'})
     stranger.request(root,expected=404)
     assert stranger.request('/projects')==[]
+    stranger_provider=stranger.request('/config/provider')
+    assert stranger_provider['provider_model']!=provider_model
+    assert provider_secret not in json.dumps(stranger_provider).lower()
     demo=Path(__file__).resolve().parents[1]/'demo'/'esp32-i2c'
     c.request(root+'/preferences',{'threshold':1.65,'baud':9600,'cpol':1,'cpha':1},method='PATCH')
     assert c.request(root)['project']['preferences']['baud']==9600

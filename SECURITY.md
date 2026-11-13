@@ -12,11 +12,12 @@ Implemented protections:
 - Atomic Redis-backed rate limits (20 authentication mutations/minute, 3 provider connection checks/minute per authenticated account, and 600 other API requests/minute per proxy peer) fail closed when Redis is unavailable. File storage is limited to 200 files/project and 1 GiB/account.
 - Browser CSP, no raw HTML rendering of uploaded text, restrictive framing and content-sniffing headers.
 - Optional LLM only selects existing citation IDs. It cannot supply source text, measured values or confidence scores. Provider secrets remain server-side.
+- Account API keys are AES-GCM encrypted at rest with an operator-managed `PROVIDER_ENCRYPTION_KEY`, bound to the account ID, excluded from API responses and logs, and sent only in the internal provider authorization header. The provider endpoint remains operator-managed to prevent user-controlled outbound destinations.
 - The authenticated provider connection check submits only a fixed synthetic citation marker, never uploaded engineering evidence. It returns a generic result without forwarding provider response bodies or credentials.
 
 ## Before public deployment
 
-Set `APP_ORIGIN` to the exact HTTPS origin and `COOKIE_SECURE=true`. Place nginx behind a trusted TLS reverse proxy. Keep PostgreSQL, Redis and the engine on a private network. Store `.env` securely and rotate secrets if exposed. Configure backups, restore testing, disk quotas, alerting, dependency updates and external review appropriate to the sensitivity of uploaded engineering IP.
+Set `APP_ORIGIN` to the exact HTTPS origin and `COOKIE_SECURE=true`. Generate `PROVIDER_ENCRYPTION_KEY` with `openssl rand -hex 32`, keep it stable, and back it up separately from PostgreSQL. Place nginx behind a trusted TLS reverse proxy. Keep PostgreSQL, Redis and the engine on a private network. Store `.env` securely and rotate secrets if exposed. Configure backups, restore testing, disk quotas, alerting, dependency updates and external review appropriate to the sensitivity of uploaded engineering IP.
 
 The default Compose service binds web access to loopback. This is a local deployment, not an internet-facing multi-tenant service. The authentication limiter sees the internal proxy address and therefore conservatively shares its limit; trusted per-client proxy handling is a future deployment hardening task.
 

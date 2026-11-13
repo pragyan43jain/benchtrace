@@ -1,6 +1,7 @@
 package main
 
 import (
+	"benchtrace/internal/secrets"
 	"benchtrace/internal/server"
 	"benchtrace/migrations"
 	"context"
@@ -37,6 +38,13 @@ func main() {
 	if s.Origin == "" || s.EngineToken == "" {
 		panic("APP_ORIGIN and ENGINE_TOKEN required")
 	}
+	providerKey := os.Getenv("PROVIDER_ENCRYPTION_KEY")
+	if providerKey != "" {
+		if _, e = secrets.ParseKey(providerKey); e != nil {
+			panic("PROVIDER_ENCRYPTION_KEY must be a 32-byte hexadecimal key")
+		}
+	}
+	s.ProviderEncryptionKey = providerKey
 	defer s.Redis.Close()
 	go s.Worker(ctx)
 	srv := &http.Server{Addr: ":8080", Handler: s.Routes(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 60 * time.Second, WriteTimeout: 120 * time.Second, IdleTimeout: 90 * time.Second}

@@ -11,8 +11,10 @@ Base path: `/api`. JSON responses except the Markdown report. Errors: `{"error":
 | GET | `/auth/me` | Restore session/profile |
 | PATCH | `/auth/me` | `{name,current_password,new_password}`; password change revokes all old sessions |
 | GET | `/activity` | Recent owned project file/investigation activity |
-| GET | `/config` | Safe analysis configuration; never returns provider credentials |
-| POST | `/config/provider-test` | Authenticated, rate-limited synthetic provider citation-selection check; sends no project evidence |
+| GET | `/config` | Safe analysis and account provider status; never returns provider credentials |
+| GET | `/config/provider` | Account-specific model and whether an API key is stored; never returns the key |
+| PUT | `/config/provider` | `{model,api_key?,clear_api_key?}`; model/key override deployment defaults; keys are encrypted at rest |
+| POST | `/config/provider-test` | Authenticated, rate-limited synthetic citation-selection check using the account's provider settings; sends no project evidence |
 | GET/POST | `/projects` | List owned projects / create `{name,description,platform}` |
 | GET/PATCH | `/projects/:p` | Project with files/investigations / update project fields |
 | PATCH | `/projects/:p/preferences` | `{threshold,baud,cpol,cpha}` defaults for future uploads |

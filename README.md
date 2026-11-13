@@ -43,7 +43,7 @@ Frontend: React, TypeScript, Vite, Tailwind, source-owned shadcn-style Radix com
 
 ## Run locally
 
-Prerequisites: Docker Engine with Compose, Python 3 for generating local secrets, an internet connection for the initial image/model download, and several GiB of free disk space. No LLM API key is required.
+Prerequisites: Docker Engine with Compose, Python 3 for generating local secrets, an internet connection for the initial image/model download, and several GiB of free disk space. No LLM API key is required for local retrieval and diagnostics. A deployment administrator can configure the compatible provider endpoint; each account can then save its own model and encrypted API key in Settings.
 
 ```sh
 git clone https://github.com/pragyan43jain/benchtrace.git
@@ -53,7 +53,7 @@ docker compose build
 docker compose up -d
 ```
 
-Open **http://localhost:8080**, create an account, and create a project. The setup script generates independent secrets in a git-ignored, owner-readable `.env` and never overwrites an existing configuration. Uploads and database records persist in named volumes. `docker compose down` stops services without deleting data; adding `-v` destroys the volumes.
+Open **http://localhost:8080**, create an account, and create a project. The setup script generates independent secrets, including the provider-key encryption key, in a git-ignored, owner-readable `.env`; it preserves existing valid values. Uploads and database records persist in named volumes. `docker compose down` stops services without deleting data; adding `-v` destroys the volumes.
 
 Only the web service is published, on loopback. For a public deployment, configure HTTPS termination, the exact `APP_ORIGIN`, `COOKIE_SECURE=true`, backups and operational monitoring. Read [SECURITY.md](SECURITY.md). No public production instance is claimed.
 

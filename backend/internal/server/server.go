@@ -19,6 +19,7 @@ type Server struct {
 	Redis                                     *redis.Client
 	Client                                    *http.Client
 	Origin, UploadDir, EngineURL, EngineToken string
+	ProviderEncryptionKey                     string
 	Secure                                    bool
 }
 type uidKey struct{}
@@ -38,6 +39,8 @@ func (s *Server) Routes() http.Handler {
 	m.Handle("GET /api/auth/me", s.require(s.me))
 	m.Handle("PATCH /api/auth/me", s.require(s.profile))
 	m.Handle("GET /api/config", s.require(s.configuration))
+	m.Handle("GET /api/config/provider", s.require(s.providerSettings))
+	m.Handle("PUT /api/config/provider", s.require(s.saveProviderSettings))
 	m.Handle("POST /api/config/provider-test", s.require(s.providerTest))
 	m.Handle("GET /api/projects", s.require(s.projects))
 	m.Handle("GET /api/activity", s.require(s.activity))

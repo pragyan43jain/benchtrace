@@ -32,7 +32,11 @@ i=c.request(root+'/investigations',{'problem':'Check relationship validation'},e
 c.request(root+'/investigations/'+i+'/tests',{'hypothesis_id':str(uuid.uuid4()),'outcome':'confirms','observation':'This hypothesis does not belong here'},expected=404)
 c.request(root+'/investigations/'+i,{'status':'resolved','resolution':''},method='PATCH',expected=400)
 config=c.request('/config');assert 'api_key' not in json.dumps(config).lower()
+assert Client().request('/config/provider',expected=401)=={'error':'Sign in required'}
 assert Client().request('/config/provider-test',{},expected=401)=={'error':'Sign in required'}
 assert 'api_key' not in json.dumps(c.request('/config/provider-test',{})).lower()
+assert 'api_key' not in json.dumps(c.request('/config/provider')).lower()
+c.request('/config/provider',{'model':'x'*201},method='PUT',expected=400)
+c.request('/config/provider',{'api_key':'x'*2049},method='PUT',expected=400)
 assert c.request(root)['files']==[]
 print('PASS: SQL parameter binding, unsupported/forged files, ZIP traversal/expansion limits, path validation, decoder validation, hypothesis ownership, resolution validation, secret-free configuration.')

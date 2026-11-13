@@ -297,7 +297,11 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var answer map[string]any
-	if e := s.engine(r.Context(), "/answer", map[string]any{"question": q.Query, "evidence": rows}, &answer); e != nil {
+	provider, e := s.providerForUser(r.Context(), user(r))
+	if dbError(w, e) {
+		return
+	}
+	if e := s.engine(r.Context(), "/answer", map[string]any{"question": q.Query, "evidence": rows, "provider": provider}, &answer); e != nil {
 		fail(w, 502, "Answer engine unavailable")
 		return
 	}

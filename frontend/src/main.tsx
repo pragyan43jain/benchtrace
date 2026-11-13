@@ -52,6 +52,8 @@ function App() {
     [retrieval, setRetrieval] = useState<any>(null),
     [config, setConfig] = useState<any>(null),
     [providerCheck, setProviderCheck] = useState<any>(null),
+    [providerModel, setProviderModel] = useState(""),
+    [providerApiKey, setProviderApiKey] = useState(""),
     [comparison, setComparison] = useState<any>(null);
   async function run(fn: () => Promise<void>) {
     setError("");
@@ -366,7 +368,11 @@ function App() {
                         setKnowledge(await api("/knowledge"));
                         setProjects(await api("/projects"));
                       }
-                      if (key === "settings") setConfig(await api("/config"));
+                      if (key === "settings") {
+                        const settings = await api("/config");
+                        setConfig(settings);
+                        setProviderModel(settings.provider_model || "");
+                      } else setProviderApiKey("");
                     })
                   }
                 >
@@ -399,6 +405,7 @@ function App() {
                     await api("/auth/logout", {});
                     setUser(null);
                     setWorkspace(null);
+                    setProviderApiKey("");
                   })
                 }
               >
@@ -1317,18 +1324,87 @@ function App() {
                     <p>
                       Diagnostics use deterministic, evidence-linked rules.
                       Local semantic retrieval keeps documents within this
-                      deployment. If an administrator configures a provider,
-                      retrieved excerpts are sent for citation selection.
+                      deployment. The administrator configures the compatible
+                      provider endpoint; your model and API key are scoped to
+                      your account.
                     </p>
                     <p className="muted">
                       Retrieval: {config?.embedding_mode || "loading"} ·{" "}
                       {config?.model}. Optional provider:{" "}
-                      {config?.provider_configured
+                      {config?.provider_available
                         ? "configured"
                         : "not configured"}
-                      . Configure LLM_BASE_URL, LLM_MODEL and LLM_API_KEY on the
-                      server. Provider output can select citations but cannot
-                      add technical claims. Secrets never reach this browser.
+                      . Provider output can select citations but cannot add
+                      technical claims.
+                    </p>
+                    <form
+                      onSubmit={(e) => {
+                        const f = form(e);
+                        run(async () => {
+                          const saved = await api(
+                            "/config/provider",
+                            {
+                              model: f.model,
+                              api_key: providerApiKey,
+                              clear_api_key: f.clear_api_key === "on",
+                            },
+                            "PUT",
+                          );
+                          setConfig({ ...config, ...saved });
+                          setProviderModel(saved.provider_model || "");
+                          setProviderApiKey("");
+                          setNotice("Provider settings saved for your account.");
+                        });
+                      }}
+                    >
+                      <label>
+                        Provider model
+                        <input
+                          name="model"
+                          maxLength={200}
+                          value={providerModel}
+                          onChange={(e) => setProviderModel(e.target.value)}
+                          placeholder="Deployment default"
+                        />
+                      </label>
+                      <label>
+                        API key
+                        <input
+                          type="password"
+                          name="api_key"
+                          autoComplete="new-password"
+                          maxLength={2048}
+                          value={providerApiKey}
+                          onChange={(e) => setProviderApiKey(e.target.value)}
+                          disabled={!config?.provider_key_editable}
+                          placeholder={
+                            config?.provider_key_set
+                              ? "Saved key present; leave blank to keep it"
+                              : "Optional; deployment key remains available"
+                          }
+                        />
+                      </label>
+                      <label className="inline-check">
+                        <input type="checkbox" name="clear_api_key" />
+                        Remove my saved key
+                      </label>
+                      {!config?.provider_key_editable && (
+                        <p className="warning">
+                          Ask the deployment administrator to set
+                          PROVIDER_ENCRYPTION_KEY before saving account API
+                          keys. The provider endpoint remains deployment-managed.
+                        </p>
+                      )}
+                      <p className="muted">
+                        Account keys are encrypted at rest. Leave the key blank
+                        to keep the saved value or use the deployment default.
+                      </p>
+                      <Button disabled={busy}>Save provider settings</Button>
+                    </form>
+                    <p className="muted">
+                      Retrieved excerpts are sent to the configured provider
+                      for citation selection. Configure LLM_BASE_URL on the
+                      server. Secrets never appear in API responses.
                     </p>
                     <p className="muted">
                       Connection checks send only a synthetic citation marker,
