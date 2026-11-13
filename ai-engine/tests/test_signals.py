@@ -296,3 +296,16 @@ def test_firmware_flags_wire_available_wait_without_local_timeout():
     assert f['line']==1 and 'does not establish reachable blocking behavior' in f['explanation']
     bounded=firmware('void readSensor(){ auto start=millis(); while(Wire.available()==0) { if(millis()-start>20) break; } }')['findings']
     assert not any(x['type']=='unbounded_i2c_wait' for x in bounded)
+
+def test_firmware_function_signatures_cover_project_types_and_ignore_prototypes():
+    source='''// void commentedOut() {}
+esp_err_t configure_bus(const i2c_master_bus_config_t *config) { return ESP_OK; }
+static uint8_t read_sensor(uint8_t address) { return address; }
+void declared_but_not_defined();
+auto read_temperature() -> float { return 0.0f; }
+'''
+    result=firmware(source)
+    assert result['functions']==['configure_bus','read_sensor','read_temperature']
+    assert [item['line'] for item in result['function_details']]==[2,3,5]
+    assert 'i2c_master_bus_config_t' in result['function_details'][0]['signature']
+    assert 'lexical matching' in result['method']

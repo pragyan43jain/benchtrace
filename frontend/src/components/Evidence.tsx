@@ -7,9 +7,16 @@ export function Evidence({ analysis: a }: { analysis: any }) {
         <>
           <h3>Functions</h3>
           <div className="row">
-            {a.functions.map((f: string) => (
-              <code className="badge" key={f}>
-                {f}()
+            {(a.function_details?.length
+              ? a.function_details
+              : (a.functions || []).map((name: string) => ({ name }))
+            ).map((f: any, i: number) => (
+              <code
+                className="badge"
+                key={`${f.name}-${f.line ?? i}`}
+                title={f.signature || undefined}
+              >
+                {f.line ? `Line ${f.line} · ` : ""}{f.name}()
               </code>
             ))}
           </div>

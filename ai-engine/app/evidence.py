@@ -139,8 +139,22 @@ def firmware(text):
             if width in (7,10) and not 0<=values[0]<(1<<width):
                 extra.append(dict(type='invalid_address',line=finding['line'],excerpt=finding['excerpt'],explanation=f'The literal target is outside the configured {width}-bit address range. Verify the intended address representation.'))
     findings.extend(extra)
-    functions=re.findall(r'\b(?:void|int|bool|float|double|uint\d+_t)\s+(\w+)\s*\([^;{}]*\)\s*\{',clean)
-    return dict(kind='firmware',method='Bounded Arduino C/C++ pattern analysis; no execution or full AST/type resolution',functions=functions,findings=findings)
+    # Capture a bounded set of ordinary function definitions, including common
+    # project-defined return types and pointer/reference returns. This is a
+    # lexical signature scan, not a C++ parser: templates, macros and complex
+    # declarators may not be represented.
+    function_pattern=(r'(?m)(?<![A-Za-z0-9_])(?:(?:static|inline|constexpr|virtual|extern|friend)\s+)*'
+                      r'(?:[A-Za-z_]\w*(?:::\w+)*(?:\s*<[^;{}()]*>)?[\s*&]+)+'
+                      r'(?P<name>[A-Za-z_]\w*)\s*\([^;{}]*\)'
+                      r'(?:\s*(?:const|noexcept(?:\([^)]*\))?))*'
+                      r'(?:\s*->\s*[^{};]+)?\s*\{')
+    function_details=[]
+    for match in re.finditer(function_pattern,clean):
+        name=match.group('name')
+        signature=' '.join(match[0][:-1].split())
+        function_details.append(dict(name=name,line=clean.count('\n',0,match.start())+1,
+                                     signature=signature[:300]))
+    return dict(kind='firmware',method='Bounded Arduino C/C++ pattern analysis; function signatures use lexical matching, with no execution or full AST/type resolution',functions=[item['name'] for item in function_details],function_details=function_details,findings=findings)
 
 
 def schematic(text):

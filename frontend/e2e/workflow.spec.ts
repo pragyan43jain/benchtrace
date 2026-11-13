@@ -96,6 +96,12 @@ test("complete engineering investigation in the browser", async ({ page }) => {
   await expect(page.getByText(/Pin connectivity is not inferred/)).toBeVisible();
   await page.getByRole("button", { name: "SDA", exact: true }).click();
   await expect(page.getByText("U3 · pin 1", { exact: true })).toBeVisible();
+  const firmware = page.locator(".file-list button").filter({ hasText: "firmware.ino" }).first();
+  await expect(firmware).toContainText("ready", { timeout: 120000 });
+  await firmware.click();
+  await expect(page.getByText("Line 4 · setup()", { exact: true })).toBeVisible();
+  await expect(page.getByText("Line 9 · loop()", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Wire\.begin\(21, 22\)/)).toBeVisible();
   await page
     .locator(".file-list button")
     .filter({ hasText: "failure.csv" })
