@@ -1,12 +1,18 @@
 {
   "simulated": true,
+  "component": "Texas Instruments TMP102",
+  "datasheet_source": "https://www.ti.com/lit/ds/symlink/tmp102.pdf",
+  "datasheet_citation": "SBOS397I, Table 6-4, printed page 10",
+  "assumed_add0_net": "GND",
+  "expected_target_address": "0x48",
   "sample_rate_hz": 2000000,
   "clock_hz": 100000,
   "logic_high_v": 3.3,
-  "fault": "firmware address 0x49 instead of model address 0x48",
+  "fault": "firmware targets unsupported address 0x4C; the simulated TMP102 ADD0-to-GND connection selects 0x48",
   "known_limits": [
     "ideal edges",
     "no analog noise",
+    "simulated circuit netlist",
     "no physical sensor",
     "no electrical compliance claim"
   ]

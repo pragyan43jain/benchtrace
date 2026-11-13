@@ -131,7 +131,7 @@ test("complete engineering investigation in the browser", async ({ page }) => {
   await channel.check();
   await page.getByRole("button", { name: "Pan →" }).click();
   await page.getByRole("button", { name: "Reset zoom" }).click();
-  await expect(page.getByText("0x92 NACK", { exact: true })).toBeVisible();
+  await expect(page.getByText("0x98 NACK", { exact: true })).toBeVisible();
   await page.screenshot({
     path: "../docs/waveform-studio.png",
     fullPage: true,
@@ -186,7 +186,7 @@ test("complete engineering investigation in the browser", async ({ page }) => {
   await top
     .getByLabel("Actual observation")
     .fill(
-      "SIMULATED verification: address 0x48 ACKs, original 0x49 NACKs. No physical measurement.",
+      "SIMULATED verification: address 0x48 ACKs, unsupported 0x4C NACKs. No physical measurement.",
     );
   await top
     .getByRole("combobox", { name: "Outcome", exact: true })

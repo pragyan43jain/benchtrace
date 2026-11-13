@@ -1,8 +1,9 @@
-SIMULATED SENSOR MODEL — NOT A MANUFACTURER DATASHEET
-BenchTrace reproducible demonstration model, revision 1.
-This fictional I2C peripheral exists only in the fixture generator.
-I2C address: 0x48 (7-bit, fixed for this simulation).
-Simulation assumptions: 3.3 V logic, ideal transitions, 100 kHz SCL.
-SDA and SCL are open-drain in the conceptual model; this digital fixture
-cannot establish analog rise times, actual resistance, or supply integrity.
-This document is NOT a specification for any physical sensor.
+SOURCE-GROUNDED EXCERPT — Texas Instruments TMP102 datasheet, SBOS397I, revised June 2024
+
+This is a short BenchTrace-created text excerpt of the manufacturer's address table, not the complete datasheet. Verify against the linked source before hardware use.
+
+Table 6-4, printed page 10. 7-bit I2C address: 0x48 (ADD0=GND); 0x49 (ADD0=V+); 0x4A (ADD0=SDA); 0x4B (ADD0=SCL).
+The attempted firmware target is not listed in the TMP102 address table.
+
+Official source PDF: https://www.ti.com/lit/ds/symlink/tmp102.pdf
+The address values above are manufacturer data. All BenchTrace waveforms, serial output, and the simulated ADD0-to-GND netlist are generated assumptions, not measured hardware evidence.

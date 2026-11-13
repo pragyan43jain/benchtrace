@@ -94,7 +94,7 @@ def main():
     else:raise AssertionError('Processing timeout')
     wave=next(f for f in files if f['name']=='failure.csv')
     stranger.request(root+'/files/'+wave['id'],expected=404)
-    analysis=c.request(root+'/files/'+wave['id'])['analysis'];assert analysis['protocols']['i2c']['frames'][0]['address']==0x49
+    analysis=c.request(root+'/files/'+wave['id'])['analysis'];assert analysis['protocols']['i2c']['frames'][0]['address']==0x4c
     assert analysis['protocols']['i2c']['frames'][0]['bytes'][0]['ack'] is False
     ten_bit=next(f for f in files if f['name']=='ten-bit-capture.csv')
     ten_bit_analysis=c.request(root+'/files/'+ten_bit['id'])['analysis']['protocols']['i2c']
@@ -121,7 +121,17 @@ def main():
     scanned_search=c.request(root+'/search',{'query':'What I2C address is printed in the scanned model?'})
     assert any(x['source']=='sensor-model-scan.pdf' and 'OCR-derived' in x['content'] for x in scanned_search['evidence'])
     search=c.request(root+'/search',{'query':'What is the sensor I2C address?'})
-    assert any('0x48' in x['content'] for x in search['evidence'])
+    assert any(x['source']=='sensor-datasheet.txt' and 'Table 6-4' in x['content'] and '0x48' in x['content'] for x in search['evidence'])
+    circuit_file=next(f for f in files if f['name']=='circuit.net')
+    circuit_analysis=c.request(root+'/files/'+circuit_file['id'])['analysis']
+    gnd_net=next(n for n in circuit_analysis['nets'] if n['name']=='GND')
+    assert {'reference':'U2','pin':'ADD0'} in gnd_net['nodes']
+    firmware_file=next(f for f in files if f['name']=='firmware.ino')
+    firmware_analysis=c.request(root+'/files/'+firmware_file['id'])['analysis']
+    assert any(x['type']=='i2c_address' and x['values']==[0x4c] for x in firmware_analysis['findings']), firmware_analysis['findings']
+    datasheet_file=next(f for f in files if f['name']=='sensor-datasheet.txt')
+    datasheet_analysis=c.request(root+'/files/'+datasheet_file['id'])['analysis']
+    assert any('7-bit I2C address: 0x48' in x['content'] for x in datasheet_analysis['chunks']), datasheet_analysis['chunks']
     i=c.request(root+'/investigations',{'problem':'SIMULATED ESP32 sensor transaction returns NACK'},expected=201)['id'];ir=root+'/investigations/'+i
     stranger.request(ir,expected=404)
     selected=[f['id'] for f in files if f['name']!='verification.csv']
@@ -129,10 +139,11 @@ def main():
     result=c.request(ir+'/diagnose',{'file_ids':selected});top=result['hypotheses'][0]
     assert {e['id'] for e in result['evidence']}==set(selected)
     assert top['rule_key']=='address' and top['status']=='unverified'
-    assert {e['source'] for e in top['assessment']['supporting_evidence']} >= {'firmware.ino','sensor-datasheet.txt','failure.csv'}
-    c.request(ir+'/tests',{'hypothesis_id':top['id'],'observation':'SIMULATED: 0x48 ACKs, while 0x49 NACKs in the disclosed generator. No physical verification.','outcome':'confirms'},expected=201)
+    supporting_sources={e['source'] for e in top['assessment']['supporting_evidence']}
+    assert supporting_sources >= {'firmware.ino','sensor-datasheet.txt','failure.csv'}, (top['rule_key'],supporting_sources)
+    c.request(ir+'/tests',{'hypothesis_id':top['id'],'observation':'SIMULATED: 0x48 ACKs, while unsupported target 0x4C NACKs in the disclosed generator. No physical verification.','outcome':'confirms'},expected=201)
     result=c.request(ir+'/diagnose',{'file_ids':selected});assert next(h for h in result['hypotheses'] if h['id']==top['id'])['status']=='confirmed'
-    c.request(ir,{'status':'resolved','resolution':'SIMULATED correction: change address to 0x48. Physical validation remains unperformed.'},method='PATCH')
+    c.request(ir,{'status':'resolved','resolution':'SIMULATED correction: change address from unsupported 0x4C to 0x48. Physical validation remains unperformed.'},method='PATCH')
     report=c.request(ir+'/report');assert 'user-confirmed' in report and '0x48' in report and 'SIMULATED' in report
     c.request(ir+'/save',{},expected=201);assert any(k['investigation_id']==i for k in c.request('/knowledge?q=sensor'))
     assert any(k['verification']=='user_confirmed' for k in c.request('/knowledge?verified=true'))

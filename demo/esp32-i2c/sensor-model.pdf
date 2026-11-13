@@ -12,9 +12,9 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 5 0 obj
-<< /Length 112 >>
+<< /Length 95 >>
 stream
-BT /F1 12 Tf 50 700 Td (SIMULATED MODEL ONLY - 7-bit I2C address: 0x48. No physical sensor specification.) Tj ET
+BT /F1 12 Tf 50 700 Td (TMP102 address excerpt. TI SBOS397I, Table 6-4, printed page 10.) Tj ET
 endstream
 endobj
 xref
@@ -28,5 +28,5 @@ xref
 trailer
 << /Root 1 0 R /Size 6 >>
 startxref
-474
+456
 %%EOF

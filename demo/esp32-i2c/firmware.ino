@@ -1,6 +1,6 @@
-// SIMULATED demonstration: intentionally wrong 7-bit address.
+// SIMULATED capture: TMP102 ADD0 is tied to GND; target address is intentionally wrong.
 #include <Wire.h>
-#define SENSOR_ADDRESS 0x49
+#define SENSOR_ADDRESS 0x4C
 void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22);

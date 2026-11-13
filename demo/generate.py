@@ -46,23 +46,23 @@ def capture(address,ack,path):
     for bit in [int(x) for x in f'{address<<1:08b}']+[int(not ack)]:
         hold(0,bit);hold(1,bit)
     hold(0,0);hold(1,0);hold(1,1)
-    with path.open('w') as f:
-        writer=csv.writer(f);writer.writerow(['time','scl','sda'])
+    with path.open('w', newline='') as f:
+        writer=csv.writer(f,lineterminator='\n');writer.writerow(['time','scl','sda'])
         for i,(scl,sda) in enumerate(samples):writer.writerow([f'{i*0.5e-6:.9f}',scl,sda])
 
-(root/'sensor-model.pdf').write_bytes(pdf_bytes('SIMULATED MODEL ONLY - 7-bit I2C address: 0x48. No physical sensor specification.'))
+(root/'sensor-model.pdf').write_bytes(pdf_bytes('TMP102 address excerpt. TI SBOS397I, Table 6-4, printed page 10.'))
 (root/'sensor-model-scan.pdf').write_bytes(scanned_pdf_bytes([
-    'SIMULATED MODEL ONLY',
-    '7-bit I2C address: 0x48',
-    'Not a manufacturer datasheet',
-    'No physical sensor specification',
+    'TI TMP102 address table, SBOS397I, page 10',
+    'ADD0 grounded: seven-bit address 0x48',
+    'ADD0 connected to V+: seven-bit address 0x49',
+    'Source: Table 6-4; OCR test rendition, not the full datasheet',
 ]))
 
-capture(0x49,False,root/'failure.csv')
+capture(0x4c,False,root/'failure.csv')
 capture(0x48,True,root/'verification.csv')
-(root/'firmware.ino').write_text('''// SIMULATED demonstration: intentionally wrong 7-bit address.
+(root/'firmware.ino').write_text('''// SIMULATED capture: TMP102 ADD0 is tied to GND; target address is intentionally wrong.
 #include <Wire.h>
-#define SENSOR_ADDRESS 0x49
+#define SENSOR_ADDRESS 0x4C
 void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22);
@@ -75,29 +75,30 @@ void loop() {
   delay(1000);
 }
 ''')
-(root/'sensor-datasheet.txt').write_text('''SIMULATED SENSOR MODEL — NOT A MANUFACTURER DATASHEET
-BenchTrace reproducible demonstration model, revision 1.
-This fictional I2C peripheral exists only in the fixture generator.
-I2C address: 0x48 (7-bit, fixed for this simulation).
-Simulation assumptions: 3.3 V logic, ideal transitions, 100 kHz SCL.
-SDA and SCL are open-drain in the conceptual model; this digital fixture
-cannot establish analog rise times, actual resistance, or supply integrity.
-This document is NOT a specification for any physical sensor.
+(root/'sensor-datasheet.txt').write_text('''SOURCE-GROUNDED EXCERPT — Texas Instruments TMP102 datasheet, SBOS397I, revised June 2024
+
+This is a short BenchTrace-created text excerpt of the manufacturer's address table, not the complete datasheet. Verify against the linked source before hardware use.
+
+Table 6-4, printed page 10. 7-bit I2C address: 0x48 (ADD0=GND); 0x49 (ADD0=V+); 0x4A (ADD0=SDA); 0x4B (ADD0=SCL).
+The attempted firmware target is not listed in the TMP102 address table.
+
+Official source PDF: https://www.ti.com/lit/ds/symlink/tmp102.pdf
+The address values above are manufacturer data. All BenchTrace waveforms, serial output, and the simulated ADD0-to-GND netlist are generated assumptions, not measured hardware evidence.
 ''')
-(root/'serial.txt').write_text('SIMULATED serial output\nSensor transaction failed\nWire.endTransmission result: 2 (address NACK in this simulation)\n')
+(root/'serial.txt').write_text('SIMULATED serial output\nSensor transaction failed\nWire.endTransmission result: 2 (address NACK in this simulation; target 0x4C is outside the TMP102 address table)\n')
 (root/'circuit.net').write_text('''(export (version E)
  (components
   (comp (ref U1) (value ESP32))
-  (comp (ref U2) (value SIMULATED_SENSOR))
+  (comp (ref U2) (value TMP102))
   (comp (ref R1) (value 4.7k_assumed))
   (comp (ref R2) (value 4.7k_assumed)))
  (nets
   (net (code 1) (name SDA) (node (ref U1) (pin 21)) (node (ref U2) (pin SDA)) (node (ref R1) (pin 1)))
   (net (code 2) (name SCL) (node (ref U1) (pin 22)) (node (ref U2) (pin SCL)) (node (ref R2) (pin 1)))
   (net (code 3) (name 3V3) (node (ref U1) (pin 3V3)) (node (ref U2) (pin VDD)) (node (ref R1) (pin 2)) (node (ref R2) (pin 2)))
-  (net (code 4) (name GND) (node (ref U1) (pin GND)) (node (ref U2) (pin GND)))))
+  (net (code 4) (name GND) (node (ref U1) (pin GND)) (node (ref U2) (pin GND)) (node (ref U2) (pin ADD0)))))
 ''')
-(root/'manifest.json').write_text(json.dumps({'simulated':True,'sample_rate_hz':2000000,'clock_hz':100000,'logic_high_v':3.3,'fault':'firmware address 0x49 instead of model address 0x48','known_limits':['ideal edges','no analog noise','no physical sensor','no electrical compliance claim']},indent=2))
+(root/'manifest.json').write_text(json.dumps({'simulated':True,'component':'Texas Instruments TMP102','datasheet_source':'https://www.ti.com/lit/ds/symlink/tmp102.pdf','datasheet_citation':'SBOS397I, Table 6-4, printed page 10','assumed_add0_net':'GND','expected_target_address':'0x48','sample_rate_hz':2000000,'clock_hz':100000,'logic_high_v':3.3,'fault':'firmware targets unsupported address 0x4C; the simulated TMP102 ADD0-to-GND connection selects 0x48','known_limits':['ideal edges','no analog noise','simulated circuit netlist','no physical sensor','no electrical compliance claim']},indent=2))
 with zipfile.ZipFile(root/'initial-evidence.zip','w',zipfile.ZIP_DEFLATED) as archive:
     for name in ['firmware.ino','failure.csv','circuit.net','serial.txt','manifest.json']:
         info=zipfile.ZipInfo(name,date_time=(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED
