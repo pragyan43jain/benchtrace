@@ -94,7 +94,7 @@ test("complete engineering investigation in the browser", async ({ page }) => {
     fullPage: false,
   });
   const top = page.locator(".hypothesis").first();
-  await top.getByText("Record a test result", { exact: true }).click();
+  await top.getByText("Record a test result and update assessment", { exact: true }).click();
   await top
     .getByLabel("Actual observation")
     .fill(
@@ -105,6 +105,8 @@ test("complete engineering investigation in the browser", async ({ page }) => {
     .selectOption("confirms");
   await top.getByRole("button", { name: "Record result" }).click();
   await expect(top).toContainText("user-confirmed");
+  await expect(top).toContainText("User-recorded verification test");
+  await expect(top).toContainText("including explicitly attributed user test records");
   const download = page.waitForEvent("download");
   await page.getByRole("link", { name: "Export report" }).click();
   expect((await download).suggestedFilename()).toBe("benchtrace-report.md");

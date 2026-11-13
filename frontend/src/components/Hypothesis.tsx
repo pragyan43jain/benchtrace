@@ -17,7 +17,7 @@ export function Hypothesis({
         <div>
           <h3>{h.title}</h3>
           <span className="muted">
-            Evidence balance {a.evidence_balance} ·{" "}
+            Evidence balance {a.evidence_balance} · {a.ranking_method} ·{" "}
             {h.status === "confirmed" ? "user-confirmed" : h.status}
           </span>
         </div>
