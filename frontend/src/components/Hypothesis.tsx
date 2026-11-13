@@ -69,7 +69,7 @@ export function Hypothesis({
       </div>
       <p className="muted">Unknown: {a.unknowns.join(" ")}</p>
       <details>
-        <summary>Record a test result</summary>
+        <summary>Record a test result and update assessment</summary>
         <form
           onSubmit={(e) => {
             e.preventDefault();

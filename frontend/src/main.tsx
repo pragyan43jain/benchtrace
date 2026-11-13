@@ -1089,6 +1089,13 @@ function App() {
                                           "/tests",
                                         data,
                                       );
+                                      await api(
+                                        prefix +
+                                          "/investigations/" +
+                                          investigation.investigation.id +
+                                          "/diagnose",
+                                        { file_ids: selectedEvidence },
+                                      );
                                       await loadInvestigation(
                                         investigation.investigation.id,
                                       );
