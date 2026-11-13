@@ -83,9 +83,14 @@ Extended bounded firmware analysis to recognize `i2c_master_bus_config_t` SDA/SC
 
 ## Milestone 11 — corrected KiCad upload demo
 
-Clarified the reproducible workflow to upload the `.kicad_sch` symbol fixture separately, then rely on the exported `.net` for assumed pin-to-net connectivity. This avoids implying the schematic symbol parser reconstructs wires. Full CI run **43381477197 passed** for the corrected fixture and API/browser coverage; the follow-up documentation run **43381658413** is in progress.
+Clarified the reproducible workflow to upload the `.kicad_sch` symbol fixture separately, then rely on the exported `.net` for assumed pin-to-net connectivity. This avoids implying the schematic symbol parser reconstructs wires. Full CI run **43381477197 passed** for the corrected fixture and API/browser coverage; follow-up documentation runs **43381658413** and **43382157097** also passed.
 
 
 ## Milestone 12 — release image verification
 
 Verified public GHCR manifests for backend, frontend and AI engine at `v0.1.0-rc.1`; pulled the AI engine image and confirmed its registry digest (`sha256:53e68d1e851ac903e6eea98ea1b64b587e7d53875640aab924e6ea1b829359a6`). This confirms registry availability and image retrieval, not a hosted production deployment.
+
+
+## Milestone 13 — final audit CI pass
+
+The complete workflow passed on commit `404018e` as run **43382157097**: Go race tests and vet, frontend production build/unit tests/audit, container build, 63 engine tests, API and security integration, and Playwright browser regression. The workflow emits only upstream GitHub Action/runner deprecation notices. Local Compose services are healthy.
