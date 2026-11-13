@@ -84,3 +84,8 @@ Extended bounded firmware analysis to recognize `i2c_master_bus_config_t` SDA/SC
 ## Milestone 11 — corrected KiCad upload demo
 
 Clarified the reproducible workflow to upload the `.kicad_sch` symbol fixture separately, then rely on the exported `.net` for assumed pin-to-net connectivity. This avoids implying the schematic symbol parser reconstructs wires. Full CI run **43381477197 passed** for the corrected fixture and API/browser coverage; the follow-up documentation run **43381658413** is in progress.
+
+
+## Milestone 12 — release image verification
+
+Verified public GHCR manifests for backend, frontend and AI engine at `v0.1.0-rc.1`; pulled the AI engine image and confirmed its registry digest (`sha256:53e68d1e851ac903e6eea98ea1b64b587e7d53875640aab924e6ea1b829359a6`). This confirms registry availability and image retrieval, not a hosted production deployment.
