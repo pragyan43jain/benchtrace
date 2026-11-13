@@ -144,6 +144,7 @@ export function Waveform({ analysis: a }: { analysis: any }) {
                     "rms",
                     "sample_rate_hz",
                     "peak_count",
+                    "trough_count",
                     "noise_estimate_v",
                     "dominant_frequency_hz",
                   ].includes(k),
@@ -157,6 +158,9 @@ export function Waveform({ analysis: a }: { analysis: any }) {
                   </div>
                 ))}
             </dl>
+            <p className="muted">
+              {a.channels[n].statistics.extrema_method}
+            </p>
             <p className="muted">
               Threshold crossings: {a.channels[n].threshold_crossings}
             </p>

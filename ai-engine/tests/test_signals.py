@@ -30,6 +30,8 @@ def test_fft_sampling_peaks_noise():
     assert s['dominant_frequency_hz']==pytest.approx(1000)
     assert s['sample_rate_hz']==pytest.approx(10000)
     assert s['peak_count']==100
+    assert s['trough_count']==100
+    assert '10% of capture peak-to-peak span' in s['extrema_method']
     noise=np.random.default_rng(4).normal(0,.05,100000)
     assert stats(np.arange(len(noise))*.001,noise)['noise_estimate_v']==pytest.approx(.05,rel=.03)
 

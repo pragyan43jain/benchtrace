@@ -10,7 +10,7 @@ BenchTrace is an open-source investigation workspace for hardware and embedded f
 
 - Keeps private projects, files, investigations, observations and reports in a persistent workspace.
 - Extracts PDF/text evidence with page references and searches it using a local semantic embedding model and pgvector.
-- Analyzes sampled CSV waveforms: voltage statistics, sampling quality, FFT, noise estimates and bounded I2C/UART/SPI decoding.
+- Analyzes sampled CSV waveforms: voltage statistics, sampling quality, prominence-based peak and trough counts, FFT, noise estimates and bounded I2C/UART/SPI decoding.
 - Finds recognizable Arduino firmware configuration and imports KiCad netlist connectivity plus embedded schematic pin metadata.
 - Ranks competing hypotheses using a documented evidence rule, with supporting sources, contradictions, unknowns and confirm/reject experiments.
 - Records user-performed tests, preserves investigation history, exports Markdown reports and saves reusable knowledge.

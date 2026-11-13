@@ -28,10 +28,13 @@ def stats(t, y):
     dt = np.diff(t)
     uniform = bool(np.max(abs(dt - np.median(dt))) <= np.median(dt) * .01)
     filtered = np.convolve(y, np.ones(5)/5, mode='valid') if len(y) >= 5 else y
-    peaks, _ = find_peaks(y, prominence=max(float(np.ptp(y))*.1, 1e-12))
+    prominence=max(float(np.ptp(y))*.1, 1e-12)
+    peaks, _ = find_peaks(y, prominence=prominence)
+    troughs, _ = find_peaks(-y, prominence=prominence)
     result = dict(min=float(min(y)), max=float(max(y)), mean=float(np.mean(y)), rms=float(np.sqrt(np.mean(y*y))),
                   sample_rate_hz=float(1/np.median(dt)), sampling_uniform=uniform,
                   sampling_jitter_fraction=float(np.std(dt)/np.mean(dt)), peak_count=len(peaks),
+                  trough_count=len(troughs), extrema_method='Prominence-based local maxima and minima; threshold is 10% of capture peak-to-peak span',
                   noise_estimate_v=float(np.median(abs(np.diff(y)-np.median(np.diff(y))))/.67448975/np.sqrt(2)),
                   noise_method='Robust first-difference estimate; edges and correlated noise can bias it',
                   moving_average=filtered[::max(1,len(filtered)//1000)].tolist(),

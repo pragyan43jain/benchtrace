@@ -77,6 +77,7 @@ test("complete engineering investigation in the browser", async ({ page }) => {
     .filter({ hasText: "failure.csv" })
     .click();
   await expect(page.locator(".uplot")).toBeVisible();
+  await expect(page.getByText("trough count", { exact: true })).toHaveCount(2);
   const channel = page.getByRole("checkbox", { name: "SDA", exact: true });
   await channel.uncheck();
   await expect(channel).not.toBeChecked();
