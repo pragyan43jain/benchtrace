@@ -8,7 +8,7 @@ No production-completeness claim is made until all required checks pass.
 | 1 Foundation | Implemented; regression verification underway | Sessions, owner isolation, projects, versioned migrations, React workspace |
 | 2 Documents | Implemented supported subset | PDF/text extraction, structured explicit characteristics, local semantic retrieval, cited answers |
 | 3 Signals | Implemented supported subset | Validated CSV, numerical analysis, bounded I2C/UART/SPI, waveform controls and comparison |
-| 4 Engineering intelligence | Partially implemented | Bounded firmware patterns, KiCad netlist graph, visible schematic pin metadata; broader static-analysis and schematic geometry remain |
+| 4 Engineering intelligence | Partially implemented | Bounded Arduino/ESP-IDF firmware patterns, KiCad netlist graph, visible schematic pin metadata; broader static-analysis and schematic geometry remain |
 | 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, five competing rule families, traceable tests and ranking |
 | 6 Product workflow | Implemented; browser regression underway | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events |
 | 7 Production quality | In progress | Security checks and local deployment pass; full CI run 43376992920 passes; product audit items remain |
@@ -74,4 +74,8 @@ Added declared pin metadata to both the uploaded schematic evidence view and the
 
 ## Milestone 9 — waveform extrema visibility
 
-Signal statistics now count local maxima and minima using the same 10%-of-peak-to-peak prominence threshold, label the method, and display both counts in the waveform workspace. Added an engine assertion for a known 1 kHz, 100-cycle signal and an end-to-end browser assertion for both channels. Verification: engine suite **59 passed** (one upstream deprecation warning); frontend build and **2 unit tests passed**; browser suite **4 passed**. A first browser attempt exposed an ambiguous selector because two channels correctly render the same metric label; it now asserts both rows. CI is pending.
+Signal statistics now count local maxima and minima using the same 10%-of-peak-to-peak prominence threshold, label the method, and display both counts in the waveform workspace. Added an engine assertion for a known 1 kHz, 100-cycle signal and an end-to-end browser assertion for both channels. Verification: engine suite **59 passed** (one upstream deprecation warning); frontend build and **2 unit tests passed**; browser suite **4 passed**. A first browser attempt exposed an ambiguous selector because two channels correctly render the same metric label; it now asserts both rows. Full CI run **43379575721 passed**.
+
+## Milestone 10 — ESP-IDF I2C configuration extraction
+
+Extended bounded firmware analysis to recognize `i2c_master_bus_config_t` SDA/SCL designated fields and `i2c_device_config_t` address/clock fields, including literal `GPIO_NUM_N` pins and chained numeric constants. The extracted bus pins now feed existing schematic-to-firmware consistency checks. Analysis remains static and does not follow handles or establish that initialization executes. Verification: engine suite **60 passed** (one upstream deprecation warning); rebuilt API integration and security integration passed. The first focused run had one test assertion mismatch in expected wording; corrected and rerun. CI is pending.

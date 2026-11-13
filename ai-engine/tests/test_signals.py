@@ -142,6 +142,28 @@ def test_four_argument_wire_overload_is_not_assumed_master_pins():
     r=diagnose([dict(id='f',name='main.ino',analysis=firmware('Wire.begin(0x48,21,22,100000);'))])
     assert not next(h for h in r['hypotheses'] if h['key']=='pins')['supporting_evidence']
 
+def test_esp_idf_designated_i2c_configuration_is_extracted():
+    source='''
+const i2c_master_bus_config_t bus = {
+  .i2c_port = I2C_NUM_0,
+  .sda_io_num = GPIO_NUM_21,
+  .scl_io_num = GPIO_NUM_22,
+};
+const i2c_device_config_t device = {
+  .device_address = 0x48,
+  .scl_speed_hz = 100000,
+};'''
+    findings=firmware(source)['findings']
+    bus=next(x for x in findings if x.get('source_api','').startswith('ESP-IDF') and x['type']=='i2c_begin')
+    address=next(x for x in findings if x.get('source_api','').startswith('ESP-IDF') and x['type']=='i2c_address')
+    clock=next(x for x in findings if x.get('source_api','').startswith('ESP-IDF') and x['type']=='i2c_clock')
+    assert bus['values']==[21,22] and address['values']==[0x48] and clock['values']==[100000]
+    assert 'do not prove' in bus['explanation']
+    circuit=schematic('(export (components (comp (ref U1)(value ESP32))) (nets (net (name SDA)(node (ref U1)(pin 21))) (net (name SCL)(node (ref U1)(pin 22)))))')
+    result=diagnose([dict(id='c',name='board.net',analysis=circuit),dict(id='f',name='main.c',analysis=firmware(source))])
+    routing=next(h for h in result['hypotheses'] if h['key']=='pins')
+    assert routing['contradictory_evidence'] and not routing['supporting_evidence']
+
 
 def test_initial_partial_protocol_captures_are_not_trusted():
     t=np.arange(2000)*1e-7

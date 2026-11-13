@@ -77,7 +77,7 @@ The sensor model, bus capture and serial output are fictional, reproducible fixt
 |---|---|
 | PDF, TXT, JSON | Text extraction, page citations where available, semantic retrieval; no OCR |
 | CSV | `time` in seconds, finite numeric channel values in volts, strictly increasing samples |
-| C/C++/INO/H/HPP | Bounded Arduino static configuration analysis; no compilation/execution |
+| C/C++/INO/H/HPP | Bounded Arduino `Wire` and ESP-IDF designated I2C configuration analysis; no compilation/execution |
 | KiCad `.net` | Exported S-expression components, pins and net connectivity |
 | KiCad `.kicad_sch` | Component properties, embedded pin number/name/type metadata and net labels; no inferred wire geometry or pin connectivity |
 | ZIP | Safe bounded import of supported files; no nested archives or links |

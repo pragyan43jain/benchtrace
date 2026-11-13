@@ -61,6 +61,8 @@ def firmware(text):
         for _ in range(8):
             if v not in defines:break
             v=defines[v]
+        gpio=re.fullmatch(r'GPIO_NUM_(\d+)',v)
+        if gpio:return int(gpio[1])
         try: return int(v,0)
         except ValueError: return None
     findings=[]
@@ -71,6 +73,24 @@ def firmware(text):
         for m in re.finditer(pattern,clean):
             args=[x.strip() for x in m[1].split(',') if x.strip()]
             findings.append(dict(type=kind,line=clean.count('\n',0,m.start())+1,excerpt=m[0],arguments=args,values=[number(a) for a in args]))
+    # Recognize the bounded ESP-IDF designated-initializer form. This does not
+    # follow handles or establish that the configured bus/device is used.
+    for m in re.finditer(r'\bi2c_master_bus_config_t\s+\w+\s*=\s*\{([^{}]*)\}',clean,re.S):
+        fields={name:match.group(1).strip() for name in ('sda_io_num','scl_io_num')
+                if (match:=re.search(r'\.'+name+r'\s*=\s*([\w]+)',m[1]))}
+        if len(fields)==2:
+            args=[fields['sda_io_num'],fields['scl_io_num']]
+            findings.append(dict(type='i2c_begin',line=clean.count('\n',0,m.start())+1,
+                                 excerpt=m[0][:500],arguments=args,values=[number(x) for x in args],
+                                 source_api='ESP-IDF i2c_master_bus_config_t designated initializer'))
+    for m in re.finditer(r'\bi2c_device_config_t\s+\w+\s*=\s*\{([^{}]*)\}',clean,re.S):
+        for field,kind in (('device_address','i2c_address'),('scl_speed_hz','i2c_clock')):
+            match=re.search(r'\.'+field+r'\s*=\s*([\w]+)',m[1])
+            if match:
+                value=match.group(1)
+                findings.append(dict(type=kind,line=clean.count('\n',0,m.start())+1,
+                                     excerpt=m[0][:500],arguments=[value],values=[number(value)],
+                                     source_api='ESP-IDF i2c_device_config_t designated initializer'))
     if 'Wire.beginTransmission' in clean and not re.search(r'\bWire\.begin\s*\(',clean):
         findings.append(dict(type='missing_init',line=1,excerpt='No Wire.begin call found in this file; initialization may occur elsewhere'))
     for m in re.finditer(r'^\s*Wire\.endTransmission\s*\([^)]*\)\s*;',clean,re.M):
@@ -92,9 +112,9 @@ def firmware(text):
             if not any(f.get('type')=='unchecked_result' and f.get('line')==line for f in findings):
                 findings.append(dict(type='unchecked_result',line=line,excerpt=m[0],explanation='The endTransmission status may be discarded; inspect return-code handling around this call.'))
     explanations={
-        'i2c_begin':'Configures the Arduino Wire bus. Literal arguments are static observations, not proof that initialization executes successfully.',
-        'i2c_address':'Targets this value in a Wire transaction. Compare the seven-bit address with the exact part and address straps.',
-        'i2c_clock':'Requests a bus clock rate. Actual clock and clock stretching must be checked in a capture.',
+        'i2c_begin':'Requests I2C bus pin configuration using a recognized Arduino or ESP-IDF form. Static values do not prove that initialization executes successfully.',
+        'i2c_address':'Targets or configures this I2C device address. Compare the seven-bit address with the exact part and address straps.',
+        'i2c_clock':'Requests an I2C bus clock rate. Actual clock and clock stretching must be checked in a capture.',
         'gpio':'Configures a pin mode. Its runtime path and board-specific electrical suitability are not established.',
         'uart_begin':'Requests serial initialization; compare baud and frame format with the capture and connected device.',
         'spi_begin':'Initializes the SPI peripheral; pin mapping and transaction mode may be configured elsewhere.',
