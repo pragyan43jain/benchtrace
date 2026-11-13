@@ -287,8 +287,9 @@ def schematic(text):
                                          unit=unit,local_at=local_at))
             libraries[lib_id]=pins
         # Connectivity for the root sheet only. Coordinates and symbol pins
-        # follow KiCad's S-expression format. Mirrored symbols and hierarchy
-        # are deliberately excluded until their transforms are implemented.
+        # follow KiCad's S-expression format. Hierarchical sheets remain out
+        # of scope; symbol pin geometry supports one X or Y mirror and right
+        # angle rotations.
         wires=[]
         for wire in children(tree,'wire'):
             points=[]
@@ -323,7 +324,9 @@ def schematic(text):
         def get_netlist_pin_position(symbol, pin):
             pos=one(symbol,'at')
             if not pos or len(pos)<4 or not pin.get('local_at'): return None
-            if one(symbol,'mirror'): return None
+            mirror=one(symbol,'mirror')
+            mirror_axis=str(mirror[1]).lower() if mirror and len(mirror)>1 else None
+            if mirror_axis not in (None,'x','y'): return None
             try:
                 origin=(float(pos[1]),float(pos[2])); angle=float(pos[3])%360
                 x,y=pin['local_at']
@@ -335,6 +338,11 @@ def schematic(text):
             elif angle==180: dx,dy=-x,-y
             elif angle==270: dx,dy=-y,x
             else: return None
+            # KiCad applies the selected mirror after rotating the pin about
+            # the symbol origin: mirror X reflects across the vertical axis;
+            # mirror Y reflects across the horizontal axis.
+            if mirror_axis=='x': dx=-dx
+            elif mirror_axis=='y': dy=-dy
             return (origin[0]+dx,origin[1]+dy)
         component_pin_anchors=[]
         for symbol in children(tree,'symbol'):
@@ -354,7 +362,7 @@ def schematic(text):
                 position_supported=bool(pins) and all('sheet_position' in p for p in pins)
                 components.append(dict(reference=props['Reference'],value=props.get('Value',''),properties=props,
                                        library_id=library_id,pins=[{k:v for k,v in p.items() if k not in ('unit','local_at')} for p in pins],
-                                       pin_positions_supported=position_supported and not bool(mirror)))
+                                       pin_positions_supported=position_supported))
                 # Power symbols name a net through their value and single pin.
                 if props['Reference'].startswith('#PWR') and props.get('Value') and len(pins)==1:
                     point=get_netlist_pin_position(symbol,pins[0])
@@ -444,10 +452,10 @@ def schematic(text):
         present_names={name for net in nets for name in net['name'].split(' / ')}
         for name in sorted(set(unlocated_labels)-present_names):
             nets.append(dict(name=name,nodes=[],name_source='label without coordinates',power_or_ground=bool(re.search(r'(?i)(GND|VCC|VDD|3V3|5V)',name))))
-        scope=('KiCad root-sheet orthogonal wire/pin/label connectivity for unmirrored symbols at right-angle rotations. '
+        scope=('KiCad root-sheet orthogonal wire/pin/label connectivity for unmirrored or single-axis mirrored symbols at right-angle rotations. '
                'Pin connectivity is not inferred from pin names alone; '
                'interior crossings without an endpoint, pin, label, or explicit junction are kept separate. Hierarchical sheets, buses, '
-               'mirrored symbols and non-right-angle transforms are not resolved. '
+               'unsupported mirror forms and non-right-angle transforms are not resolved. '
                + ('A topology operation limit was exceeded, so this schematic has no derived net graph. ' if connectivity_limit_hit else '')
                + ('Diagonal wires are ignored. ' if unsupported_wire_geometry else '')
                + 'Exported .net is recommended '

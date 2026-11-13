@@ -13,7 +13,7 @@ The deterministic fixed-scenario diagnostic evaluation and its limits are docume
 - Keeps private projects, files, investigations, observations and reports in a persistent workspace.
 - Extracts PDF/text evidence with page references and searches it using a local semantic embedding model and pgvector.
 - Analyzes sampled CSV waveforms: voltage statistics, sampling quality, prominence-based peak and trough counts, FFT, noise estimates and bounded I2C/UART/SPI decoding.
-- Finds recognizable Arduino firmware configuration and imports KiCad netlists plus supported root-sheet schematic wires, labels, symbol pins and pin-to-net relationships.
+- Finds recognizable Arduino firmware configuration and imports KiCad netlists plus supported root-sheet schematic wires, labels, X/Y-mirrored symbol pins, and pin-to-net relationships.
 - Ranks competing hypotheses using a documented evidence rule, with supporting sources, contradictions, unknowns and confirm/reject experiments.
 - Records user-performed tests, preserves investigation history, exports Markdown reports and saves reusable knowledge.
 
@@ -90,7 +90,7 @@ The sensor model, bus capture and serial output are fictional, reproducible fixt
 | CSV | `time` in seconds, finite numeric channel values in volts, strictly increasing samples |
 | C/C++/INO/H/HPP | Bounded Arduino `Wire` and ESP-IDF designated I2C configuration analysis; no compilation/execution |
 | KiCad `.net` | Exported S-expression components, pins and net connectivity |
-| KiCad `.kicad_sch` | Component properties, embedded pin metadata, root-sheet orthogonal wire geometry, labels, and supported pin-to-net connections; unsupported transforms and hierarchy are disclosed, exported `.net` is recommended for authoritative connectivity |
+| KiCad `.kicad_sch` | Component properties, embedded pin metadata, root-sheet orthogonal wire geometry, labels, single-axis X/Y mirroring with right-angle rotations, and supported pin-to-net connections; unsupported transforms and hierarchy are disclosed, exported `.net` is recommended for authoritative connectivity |
 | ZIP | Safe bounded import of supported files; no nested archives or links |
 
 CSV channel names: `scl,sda` for I2C; `rx` for UART; `clk,mosi,cs` for SPI. Threshold, UART baud, CPOL and CPHA are configurable. Decoders report sampling limitations. I2C supports seven-bit addresses and ten-bit address phases, including repeated-start reads when the capture includes the matching acknowledged write-address phase. UART is non-inverted 8N1; SPI is active-low-CS/MSB-first/eight-bit MOSI.

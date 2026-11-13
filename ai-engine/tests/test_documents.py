@@ -148,6 +148,27 @@ def test_schematic_rotated_symbol_pin_position_matches_wire_endpoint():
     assert result['nets'][0]['nodes']==[{'reference':'R1','pin':'1'}]
     assert result['nets'][0]['name']=='ROTATED'
 
+@pytest.mark.parametrize(('mirror','angle','expected'),[
+    ('x',0,[18.0,33.0]),('y',0,[22.0,27.0]),
+    ('x',90,[17.0,28.0]),('y',90,[23.0,32.0]),
+])
+def test_schematic_mirrored_symbol_pin_position_matches_wire_endpoint(mirror,angle,expected):
+    text=f'''(kicad_sch (version 20250114)
+      (lib_symbols (symbol "Demo:Pin"
+        (symbol "Pin_1_1" (pin passive line (at 2 3 0) (length 2.54)
+          (name "IO" (effects (font (size 1 1))))
+          (number "1" (effects (font (size 1 1))))))))
+      (symbol (lib_id "Demo:Pin") (at 20 30 {angle}) (mirror {mirror}) (unit 1)
+        (property "Reference" "R1") (property "Value" "1k"))
+      (label "MIRRORED" (at {expected[0]} {expected[1]} 0) (effects (font (size 1 1))) (uuid "l1"))
+      (wire (pts (xy 20 30) (xy {expected[0]} {expected[1]}))
+        (stroke (width 0) (type default)) (uuid "w1")))'''
+    result=schematic(text)
+    assert result['components'][0]['pins'][0]['sheet_position']==expected
+    assert result['components'][0]['pin_positions_supported'] is True
+    assert result['nets'][0]['nodes']==[{'reference':'R1','pin':'1'}]
+    assert result['nets'][0]['name']=='MIRRORED'
+
 def test_schematic_topology_budget_discards_partial_graph():
     wires=''.join(f'''(wire (pts (xy {i} 0) (xy {i+1000} 0))
       (stroke (width 0) (type default)) (uuid "w{i}"))''' for i in range(1001))
