@@ -53,3 +53,8 @@ Milestone 3 verification completed: rebuilt-image engine suite **48 passed** (on
 Pinned the semantic model to an immutable repository revision and verified every downloaded artifact with SHA-256 during image builds. Added vector identity to document and knowledge records, version-scoped cache/search behavior, and bounded idle-worker migration of legacy vectors from preserved source text. Firmware analysis now resolves common numeric constants and flags same-pin I2C setup and invalid seven-bit targets with contextual explanations. Added UART/SPI capture-boundary uncertainty reporting and automated WCAG scans.
 
 Verified: engine suite **52 passed**; API integration and negative security workflows passed; browser suite **4 passed**, including desktop/mobile WCAG scans; Go race tests/vet passed; GitHub Actions run **43373860041 succeeded** across Go, frontend, Docker, engine, API/security and browser jobs. Local database migration 003 applied and all 35 existing vectors carry the pinned model identity. GHCR image publication remains untested; no hosted production deployment is claimed.
+
+
+## Milestone 5 — expanded I2C diagnostic evaluation
+
+Added fixed scenarios for chained address constants, strap-dependent alternate addresses and invalid 8-bit values passed to the 7-bit Wire API. The engine suite now reports **56 passed**. Commits `e3150bc` (unchecked I2C read finding) and `dad82b7` (expanded dataset) are pushed; their CI runs are pending. GHCR prerelease workflow `43374242750` completed successfully for backend, engine and frontend. Pulling the large engine image locally remains unverified; the backend image pull succeeded.
