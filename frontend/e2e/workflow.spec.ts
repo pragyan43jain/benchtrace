@@ -159,6 +159,7 @@ test("complete engineering investigation in the browser", async ({ page }) => {
     "sensor-datasheet.txt",
   );
   await expect(page.locator(".hypothesis").first()).toContainText("Safety:");
+  await page.setViewportSize({ width: 1280, height: 1000 });
   await page.screenshot({
     path: "../docs/diagnostic-workspace.png",
     fullPage: false,

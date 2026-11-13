@@ -12,7 +12,7 @@ No production-completeness claim is made until all required checks pass.
 | 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, five competing rule families, traceable tests and ranking |
 | 6 Product workflow | Implemented and browser verified | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events and browser regression |
 | 7 Production quality | Ongoing audit | Security checks and source/published-image local deployments pass; full workflow 43400416041 passes; remaining audit boundaries are recorded in docs/REQUIREMENTS.md |
-| 8 Release | Release candidates published | Required docs, screenshots, reproducible simulation, milestone pushes and GHCR images for all three services; v0.1.4-rc.1 publication and image verification underway; no stable release or hosted production deployment claimed |
+| 8 Release | Release candidates published | Required docs, screenshots, reproducible simulation, milestone pushes and GHCR images for all three services; v0.1.4-rc.1 prerelease published and registry images verified locally; no stable release or hosted production deployment claimed |
 
 ## Design commitments
 - All demo captures explicitly simulated; no physical verification claims.
@@ -156,3 +156,7 @@ Expanded bounded C/C++ function signature extraction to cover common project-def
 ## Milestone 26 — safety guidance for verification tests
 
 Added hypothesis-specific safety notes for voltage probing, pull-up inspection, continuity checks, rewiring and analyzer connections. The diagnostic workspace displays the note with each recommended test, while the engine evaluation requires every hypothesis to include safety guidance. Verification: 81 engine tests, source API integration, negative security checks and all **4 Playwright tests** passed; full CI run **43400416041** passed.
+
+## Milestone 27 — v0.1.4-rc.1 image release and verification
+
+Published annotated tag `v0.1.4-rc.1`; GHCR workflow **43401518333** succeeded for backend, AI engine and frontend. Created the [GitHub prerelease](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.4-rc.1) with implementation details and explicit limitations. Pulled the published images and ran an isolated Compose stack: all services became healthy; API health, integration, negative security checks and all **4 Playwright tests** passed, including firmware source lines and safety guidance in the browser. Removed the isolated test stack and volumes afterward. Public cloud deployment and physical hardware tests remain unclaimed.
