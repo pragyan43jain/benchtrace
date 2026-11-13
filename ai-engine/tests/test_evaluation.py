@@ -28,3 +28,13 @@ def test_reported_symptoms_are_preserved_without_measurement_claim():
     assert 'missing acknowledgement' in r['symptoms']
     assert 'address concern' in r['symptoms']
     assert all(not h['supporting_evidence'] for h in r['hypotheses'])
+
+def test_electrical_recommendations_include_relevant_safety_limits():
+    result=diagnose([{'id':'fw','name':'firmware.ino','analysis':firmware('Wire.beginTransmission(0x49); Wire.endTransmission();')}])
+    hypotheses={h['key']:h for h in result['hypotheses']}
+    power=hypotheses['power']['assessment']['recommended_test'] if 'assessment' in hypotheses['power'] else hypotheses['power']['recommended_test']
+    pullups=hypotheses['pullups']['assessment']['recommended_test'] if 'assessment' in hypotheses['pullups'] else hypotheses['pullups']['recommended_test']
+    pins=hypotheses['pins']['assessment']['recommended_test'] if 'assessment' in hypotheses['pins'] else hypotheses['pins']['recommended_test']
+    assert 'isolated' in power and 'Do not probe mains' in power
+    assert 'power removed' in pullups
+    assert 'power disconnected' in pins
