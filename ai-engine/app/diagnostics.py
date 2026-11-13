@@ -38,8 +38,8 @@ def diagnose(files, tests=None, problem=""):
         if p.get('reliable'):
             if p.get('clock_hz'):measured_clocks.append((p['clock_hz'],citation(f,f"Decoded median SCL clock: {p['clock_hz']:.2f} Hz")))
             for frame in p.get('frames',[]):
-                if frame.get('bytes'):
-                    item=(frame.get('address'),citation(f,f"Decoded address 0x{frame['address']:02x}: {'ACK' if frame['bytes'][0]['ack'] else 'NACK'}",time=frame['start']))
+                if frame.get('bytes') and frame.get('address') is not None and frame.get('address_width',7)==7:
+                    item=(frame['address'],citation(f,f"Decoded 7-bit address 0x{frame['address']:02x}: {'ACK' if frame['bytes'][0]['ack'] else 'NACK'}",time=frame['start']))
                     (acks if frame['bytes'][0]['ack'] else nacks).append(item)
     hypotheses=[]
     def add(key,title,support,against,test,confirm,reject,unknowns):

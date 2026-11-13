@@ -195,6 +195,16 @@ def test_i2c_marks_unresolved_ten_bit_read_and_incomplete_address_unreliable():
     assert not incomplete['reliable']
     assert any('second address byte is missing' in w for w in incomplete['warnings'])
 
+def test_ten_bit_capture_is_not_correlated_as_a_seven_bit_firmware_address():
+    files=[
+        dict(id='fw',name='main.ino',category='firmware',analysis=firmware('Wire.beginTransmission(0x48);')),
+        dict(id='ds',name='sensor.txt',category='datasheet',analysis={'chunks':[{'page':1,'content':'7-bit I2C address: 0x48'}]}),
+        dict(id='capture',name='ten-bit.csv',category='measurement',analysis={'protocols':{'i2c':{'reliable':True,'frames':[{'address':0x48,'address_width':10,'start':0.0,'bytes':[{'ack':False}]}]}}}),
+    ]
+    hypothesis=next(h for h in diagnose(files)['hypotheses'] if h['key']=='address')
+    cited_capture=[e for e in hypothesis['supporting_evidence']+hypothesis['contradictory_evidence'] if e['file_id']=='capture']
+    assert not cited_capture
+
 def test_empty_uart_and_spi_are_not_claimed_decodable():
     t=np.arange(100)*1e-7;high=np.full(100,3.3)
     assert not decode_uart(t,high)['reliable']
