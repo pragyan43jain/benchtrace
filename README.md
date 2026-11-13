@@ -4,7 +4,7 @@
 
 BenchTrace is an open-source investigation workspace for hardware and embedded firmware failures. It connects source code, circuit connectivity, component documentation, and measured signals so an engineer can evaluate competing causes and choose a verification test.
 
-**Development release — not yet declared production-complete.** See the [requirement audit](docs/REQUIREMENTS.md) and [executed milestones](ROADMAP.md). The initial supported diagnostic workflow targets ESP32/Arduino I2C failures.
+**Development release — not yet declared production-complete.** See the [requirement audit](docs/REQUIREMENTS.md) and [executed milestones](ROADMAP.md). The initial supported diagnostic workflow targets ESP32/Arduino I2C failures. The current [v0.1.3-rc.1 GitHub release](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.3-rc.1) includes the published-image verification results and scope boundaries.
 
 ## What it does
 
