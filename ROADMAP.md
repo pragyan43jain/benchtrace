@@ -1,18 +1,18 @@
 # BenchTrace execution status
 
-No production-completeness claim is made until all required checks pass.
+The v0.1.9 supported release scope has passed the documented verification gates. This does not claim physical hardware validation, hosted production service, or analysis beyond the supported format and protocol subsets; see `docs/REQUIREMENTS.md`.
 
 | Stage | Status | Acceptance |
 |---|---|---|
 | 0 Repository inspection | Complete | Empty repository; Go, Python, Node, Docker and GitHub available |
-| 1 Foundation | Implemented; regression verification underway | Sessions, owner isolation, projects, versioned migrations, React workspace |
+| 1 Foundation | Verified | Sessions, owner isolation, projects, versioned migrations, React workspace |
 | 2 Documents | Implemented supported subset | PDF/text extraction, structured explicit characteristics, local semantic retrieval, cited answers |
 | 3 Signals | Implemented supported subset | Validated CSV, numerical analysis, bounded I2C/UART/SPI, waveform controls and comparison |
 | 4 Engineering intelligence | Supported subset implemented | Bounded Arduino/ESP-IDF firmware patterns; KiCad `.net` connectivity and bounded root-sheet orthogonal `.kicad_sch` topology; unsupported geometry and broader AST/control-flow analysis are documented |
 | 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, six competing rule families, traceable tests and ranking |
 | 6 Product workflow | Implemented and browser verified | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events and browser regression |
-| 7 Production quality | Ongoing audit | Security checks and source/published-image local deployments pass; full workflow 43400416041 passes; remaining audit boundaries are recorded in docs/REQUIREMENTS.md |
-| 8 Release | Release candidates published | Required docs, screenshots, reproducible simulation, milestone pushes and GHCR images for all three services; v0.1.4-rc.1 and v0.1.5-rc.1 prereleases published and registry images verified locally; no stable release or hosted production deployment claimed |
+| 7 Production quality | Verified for supported scope | Security checks, source and published-image deployments, full CI, evaluation, API integration and browser workflows pass; boundaries are recorded in `docs/REQUIREMENTS.md` |
+| 8 Release | Stable v0.1.9 published | Required docs, screenshots, reproducible simulation, public GitHub release and GHCR images for all three services; stable images verified locally; no hosted production service claimed |
 
 ## Design commitments
 - All demo captures explicitly simulated; no physical verification claims.
@@ -212,3 +212,7 @@ Replaced the fictional sensor specification with a source-attributed excerpt fro
 ## Milestone 39 — v0.1.9 source-grounded demo release
 
 Published the [v0.1.9 release](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.9) and GHCR images with workflow **43428401949**. The release includes the TI TMP102 cited address excerpt and reproducible simulated NACK/verification captures. Pulled the stable images and ran an isolated Compose deployment; API integration, negative security checks, and all **4 Playwright tests** passed. Image digests: backend `sha256:748eb2984313a5d6ac63b37805792960620ba9918ae0148e31537c0cbc535b94`, engine `sha256:87139ae197be6088c2bac50e372596c6b81bfecc77cb0cf982cc548926183a4b`, frontend `sha256:76674043a6c03ce3a8b9ebccd648173c940b548282e81d8a6169b6fbf613e35b`. Full CI run **43429479077** passed the Go, frontend, engine/evaluation, API/security and browser suites, including the `v0.1.9` published-image overlay assertion.
+
+## Milestone 40 — final requirements and CI audit
+
+Reconciled the roadmap summary with the stable release and recorded the final verification workflow. Full GitHub workflow **43430047979** completed successfully on commit `2b7079a`, including Go race/vet, frontend build/unit/audit, engine tests and deterministic evaluation, API/security integration, four Playwright workflows, and the `v0.1.9` image-overlay check. The requirement-by-requirement evidence and explicit limitations are in `docs/REQUIREMENTS.md`; no physical hardware or hosted service is claimed.
