@@ -1,19 +1,73 @@
 (kicad_sch
   (version 20250114)
   (generator "eeschema")
+  (generator_version "9.0")
   (uuid "4fbe4df3-4279-4d6e-9d52-85cf62d72b0f")
   (paper "A4")
   (lib_symbols
     (symbol "BenchTrace:SIMULATED_I2C_SENSOR"
-      (symbol "SIMULATED_I2C_SENSOR_0_1"
-        (pin input line (name "SDA") (number "1"))
-        (pin input line (name "SCL") (number "2"))
-        (pin power_in line (name "VDD") (number "3"))
-        (pin power_in line (name "GND") (number "4")))))
+      (pin_names (offset 1.016))
+      (exclude_from_sim no)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "U"
+        (at 0 5.08 0)
+        (effects (font (size 1.27 1.27))))
+      (property "Value" "SIMULATED_I2C_SENSOR"
+        (at 0 2.54 0)
+        (effects (font (size 1.27 1.27))))
+      (symbol "SIMULATED_I2C_SENSOR_0_1")
+      (symbol "SIMULATED_I2C_SENSOR_1_1"
+        (pin input line
+          (at 0 0 180) (length 2.54)
+          (name "SDA" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))
+        (pin input line
+          (at 0 2.54 180) (length 2.54)
+          (name "SCL" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27)))))
+        (pin power_in line
+          (at 0 5.08 180) (length 2.54)
+          (name "VDD" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
+        (pin power_in line
+          (at 0 7.62 180) (length 2.54)
+          (name "GND" (effects (font (size 1.27 1.27))))
+          (number "4" (effects (font (size 1.27 1.27)))))))
+  )
   (symbol
     (lib_id "BenchTrace:SIMULATED_I2C_SENSOR")
     (at 100 80 0)
-    (property "Reference" "U3")
-    (property "Value" "SIMULATED_I2C_SENSOR"))
-  (label "SDA")
-  (label "SCL"))
+    (unit 1)
+    (exclude_from_sim no)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "02cbf7cc-3a73-4386-bdfa-3dab1c2dcb6f")
+    (property "Reference" "U3"
+      (at 100 72 0)
+      (effects (font (size 1.27 1.27))))
+    (property "Value" "SIMULATED_I2C_SENSOR"
+      (at 100 74 0)
+      (effects (font (size 1.27 1.27))))
+    (pin "1" (uuid "1bf45358-f234-482c-a2f1-dfe67b3598a2"))
+    (pin "2" (uuid "06f43cba-9882-4cdd-8723-06401ac2ab95"))
+    (pin "3" (uuid "bc117193-4698-4816-856c-425fc0a9bd43"))
+    (pin "4" (uuid "488473ca-6381-4385-b19f-11934c3c965a"))
+    (instances
+      (project "BenchTrace simulated demo"
+        (path "/4fbe4df3-4279-4d6e-9d52-85cf62d72b0f"
+          (reference "U3")
+          (unit 1)))))
+  (label "SDA"
+    (at 110 80 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid "51072653-dc08-45a0-a314-3e10cb1bed95"))
+  (label "SCL"
+    (at 110 82.54 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid "84f83222-2480-42e2-9ad2-d2790b253725"))
+  (sheet_instances
+    (path "/"
+      (page "1")))
+  (embedded_fonts no))
