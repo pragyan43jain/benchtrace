@@ -115,4 +115,9 @@ Created and pushed annotated tag `v0.1.1-rc.1`. GHCR publication workflow **4338
 
 ## Milestone 17 — schematic source attribution in diagnosis
 
-Corrected the pin-consistency hypothesis to cite extracted circuit evidence by source filename instead of labeling every circuit as an exported netlist. Added a fixed evaluation that builds SDA/SCL nets from `.kicad_sch` label/pin geometry, ranks a firmware pin mismatch as supporting evidence, and treats matching firmware pins as contradictory evidence. The verification test recommendation now refers to extracted schematic or netlist connections. Verification: **68 engine tests passed**; rebuilt API integration and security integration passed; Playwright **4 passed**. CI for this source-attribution refinement is pending.
+Corrected the pin-consistency hypothesis to cite extracted circuit evidence by source filename instead of labeling every circuit as an exported netlist. Added a fixed evaluation that builds SDA/SCL nets from `.kicad_sch` label/pin geometry, ranks a firmware pin mismatch as supporting evidence, and treats matching firmware pins as contradictory evidence. The verification test recommendation now refers to extracted schematic or netlist connections. Verification: **68 engine tests passed**; rebuilt API integration and security integration passed; Playwright **4 passed**. Full CI run **43388763329** passed on source commit `67cbaf1`.
+
+
+## Milestone 18 — source-attribution CI
+
+Full workflow **43388763329** passed on `67cbaf1`: Go race/vet, frontend build/unit tests/audit, Docker build, all 68 engine tests, API/security integration, and four Playwright tests. Only upstream GitHub Action/runner deprecation notices were emitted.
