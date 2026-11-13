@@ -31,11 +31,11 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 | Input validation, SQL/path/CSRF/secrets/CORS | Negative API suite, no public internal services, same-origin policy | Implemented; atomic rate limits and storage quotas added |
 | Untrusted documents and prompt injection | No firmware execution, read-only engine, provider selects only existing citation IDs | Implemented disposable bounded parser processes and provider rejection tests; not a VM security boundary |
 | Database relationships/indexes/timestamps/migrations | Versioned schema, migration ledger, relationships and update timestamps | Implemented checksum-verified migration ledger, update triggers and project events |
-| Backend, engine, AI, frontend, integration tests | Executed tests recorded in ROADMAP; fixed diagnosis scenarios | Go race/vet, 56 engine tests, API/security integration, 4 browser tests and CI run 43373860041 passed. CI runs for e3150bc, dad82b7, and the corrected ranking-test commit 612a8ca are green. The earlier reassessment commit failed because its E2E selector expected the previous label |
+| Backend, engine, AI, frontend, integration tests | Executed tests recorded in ROADMAP; fixed diagnosis scenarios | Go race/vet, 59 engine tests, API/security integration, 4 browser tests and CI run 43376992920 passed. Earlier selector and stale KiCad wording failures were corrected and superseded by green full-suite CI runs |
 | Docker deployment | Running local stack, API integration passes | Verified local; public cloud hosting not configured or claimed |
 | CI/CD | CI runs; first run failed on now-fixed browser locator; tag image workflow exists | CI run 43373860041 green; prerelease image build/publish workflow 43374242750 green for all three images. Engine image local pull remains unverified |
 | Required docs/license/demo/screenshots | Docs exist; actual screenshots; disclosed simulation | README, reproducible PDF generator and screenshots complete; final status matrix remains open |
-| Responsive/accessibility/performance | Desktop workflow, mobile width assertion; lazy waveform code | Automated WCAG checks passed for landing/auth/project list desktop/mobile; four-test browser suite including ranking reassessment and owner-isolation passed locally and in CI run 43375475924; latest roadmap-only CI remains active |
+| Responsive/accessibility/performance | Desktop workflow, mobile width assertion; lazy waveform code | Automated WCAG checks passed for landing/auth/project list desktop/mobile; four-test browser suite including ranking reassessment and owner-isolation passed locally and in CI run 43376992920 |
 
 ## Scope boundaries that remain explicit
 
