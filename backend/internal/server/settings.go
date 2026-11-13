@@ -59,19 +59,20 @@ func (s *Server) providerForUser(ctx context.Context, owner string) (providerCon
 }
 
 func (s *Server) providerState(ctx context.Context, owner string) (map[string]any, error) {
-	cfg, err := s.providerForUser(ctx, owner)
-	if err != nil {
-		return nil, err
-	}
+	model := os.Getenv("LLM_MODEL")
+	var accountModel string
 	var accountKeySet bool
-	err = s.DB.QueryRow(ctx, "SELECT api_key_ciphertext IS NOT NULL FROM provider_settings WHERE user_id=$1", owner).Scan(&accountKeySet)
+	err := s.DB.QueryRow(ctx, "SELECT model,api_key_ciphertext IS NOT NULL FROM provider_settings WHERE user_id=$1", owner).Scan(&accountModel, &accountKeySet)
 	if err != nil && err != pgx.ErrNoRows {
 		return nil, err
 	}
+	if accountModel != "" {
+		model = accountModel
+	}
 	_, encryptionErr := secrets.ParseKey(s.ProviderEncryptionKey)
 	return map[string]any{
-		"provider_available":    strings.TrimSpace(cfg.BaseURL) != "",
-		"provider_model":        cfg.Model,
+		"provider_available":    strings.TrimSpace(os.Getenv("LLM_BASE_URL")) != "",
+		"provider_model":        model,
 		"provider_key_set":      accountKeySet,
 		"provider_key_editable": encryptionErr == nil,
 	}, nil
