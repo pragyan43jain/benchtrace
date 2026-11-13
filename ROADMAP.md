@@ -44,6 +44,12 @@ Created `docs/REQUIREMENTS.md` to preserve the full requested scope. Added struc
 
 Executed against the rebuilt stack: expanded API integration **passed**, including PDF upload, preferences, selected evidence, components/history, waveform comparison, procedures, verified filtering and account updates. Negative security integration **passed**. Engine suite **48 passed** against source (image regression is running). Frontend production build and **2 unit tests passed**; npm audit **0 vulnerabilities**. Prior Go and Python package scans were clean after remediation; current Go rescan and three browser scenarios are running.
 
-Remaining: finish the unchanged-image/browser checks, push and obtain green GitHub CI, exercise release-image publication, and close the remaining audit rows. No claim of 100% completion or public production hosting.
+Remaining: exercise release-image publication and close the remaining audit rows. No claim of 100% completion or public production hosting.
 
 Milestone 3 verification completed: rebuilt-image engine suite **48 passed** (one test-client deprecation warning); browser suite **3 passed** (full investigation, session restore/login/logout, owner-only WebSocket events); Go race tests and vet **passed**; `govulncheck` **no vulnerabilities found**. Both API integration suites passed on the rebuilt stack. Remaining work is tracked in the requirement audit; a green final CI and exercised release workflow are still required.
+
+## Milestone 4 — pinned retrieval and verification
+
+Pinned the semantic model to an immutable repository revision and verified every downloaded artifact with SHA-256 during image builds. Added vector identity to document and knowledge records, version-scoped cache/search behavior, and bounded idle-worker migration of legacy vectors from preserved source text. Firmware analysis now resolves common numeric constants and flags same-pin I2C setup and invalid seven-bit targets with contextual explanations. Added UART/SPI capture-boundary uncertainty reporting and automated WCAG scans.
+
+Verified: engine suite **52 passed**; API integration and negative security workflows passed; browser suite **4 passed**, including desktop/mobile WCAG scans; Go race tests/vet passed; GitHub Actions run **43373860041 succeeded** across Go, frontend, Docker, engine, API/security and browser jobs. Local database migration 003 applied and all 35 existing vectors carry the pinned model identity. GHCR image publication remains untested; no hosted production deployment is claimed.

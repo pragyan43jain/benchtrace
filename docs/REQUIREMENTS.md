@@ -5,7 +5,7 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 | Requirement | Current implementation / evidence | Status / remaining proof |
 |---|---|---|
 | Repository inspection and baseline | Empty starting directory; Git history records roadmap and first implementation | Complete |
-| New GitHub repo and milestone pushes | https://github.com/pragyan43jain/benchtrace ; four published milestones | Complete, continue pushes |
+| New GitHub repo and milestone pushes | https://github.com/pragyan43jain/benchtrace ; five published milestones | Complete, continue pushes |
 | React/TS/Vite/Tailwind/shadcn/Lucide | Frontend build; source-owned Radix button; actual API-backed views | Implemented, retain browser regression |
 | Go REST, structured logs, modular backend | Domain-separated server files plus auth/storage packages | Implemented; strengthen service/module boundaries as needed |
 | Python/FastAPI/Pydantic, NumPy/SciPy/Pandas | Engine source and executed tests | Implemented |
@@ -19,7 +19,7 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 | CSV, visualization, zoom/pan/selection | uPlot browser test, parsed capture fixtures | Verified browser channel selection, pan/reset and mobile width assertions |
 | Voltage/frequency/peaks/noise/sampling/FFT/filter/threshold/comparison | Numerical unit tests; viewer metrics, FFT, comparison API | Implemented filtered display; numerical tests and comparison API integration passed |
 | I2C, UART, SPI with sampling guards | Known waveform tests, four SPI modes, UART framing, I2C ACK/NACK | Implemented bounded modes; extend transition/timing edge-case tests |
-| Firmware functions/GPIO/protocol/init/delay/error handling | Comment/string-aware static patterns with line citations | Partial: inconsistent pin configurations and source explanation need broader tests |
+| Firmware functions/GPIO/protocol/init/delay/error handling | Comment/string-aware static patterns with line citations | Expanded constant resolution, pin-conflict and invalid-address explanations; targeted tests added, broader C/C++ static-analysis coverage remains |
 | KiCad components, pins, nets, power graph | `.net` connectivity, `.kicad_sch` symbol/label extraction, interactive net graph | Implemented supported subset; no schematic wire-geometry claim |
 | Diagnostic problem relevance and evidence selection | User-selected ready files, stored problem/symptoms and explicit unsupported-protocol refusal | Implemented; selection and ownership API regression passed |
 | Ranked competing hypotheses, contradictions, uncertainty and tests | Five rule families, source-count ranking, test records, fixed evaluations | Implemented; automatic update after recording new tests should be clearer |
@@ -31,9 +31,9 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 | Input validation, SQL/path/CSRF/secrets/CORS | Negative API suite, no public internal services, same-origin policy | Implemented; atomic rate limits and storage quotas added |
 | Untrusted documents and prompt injection | No firmware execution, read-only engine, provider selects only existing citation IDs | Implemented disposable bounded parser processes and provider rejection tests; not a VM security boundary |
 | Database relationships/indexes/timestamps/migrations | Versioned schema, migration ledger, relationships and update timestamps | Implemented checksum-verified migration ledger, update triggers and project events |
-| Backend, engine, AI, frontend, integration tests | Executed tests recorded in ROADMAP; fixed diagnosis scenarios | Partial: close identified coverage gaps and run final unchanged tree |
+| Backend, engine, AI, frontend, integration tests | Executed tests recorded in ROADMAP; fixed diagnosis scenarios | Go race/vet, 52 engine tests, API/security integration, 4 browser tests and CI run 43373860041 passed; broader requirement coverage remains |
 | Docker deployment | Running local stack, API integration passes | Verified local; public cloud hosting not configured or claimed |
-| CI/CD | CI runs; first run failed on now-fixed browser locator; tag image workflow exists | Partial: obtain green final CI and exercise image publication |
+| CI/CD | CI runs; first run failed on now-fixed browser locator; tag image workflow exists | CI run 43373860041 green; versioned GHCR image publication still unverified |
 | Required docs/license/demo/screenshots | Docs exist; actual screenshots; disclosed simulation | README, reproducible PDF generator and screenshots complete; final status matrix remains open |
 | Responsive/accessibility/performance | Desktop workflow, mobile width assertion; lazy waveform code | Automated WCAG checks passed for landing/auth/project list desktop/mobile; full final workflow regression remains open |
 
