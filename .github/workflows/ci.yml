@@ -46,7 +46,7 @@ jobs:
             sleep 2
           done
           exit 1
-      - run: docker compose run --rm --no-deps engine python -m pytest -q -p no:cacheprovider
+      - run: docker compose run --rm --no-deps engine sh -c 'python -m pytest -q -p no:cacheprovider && python evaluation/run.py'
       - run: python3 scripts/integration.py && python3 scripts/security-check.py
       - run: npm ci && npx playwright install --with-deps chromium && npm run test:e2e
         working-directory: frontend

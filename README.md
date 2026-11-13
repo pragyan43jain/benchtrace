@@ -6,6 +6,8 @@ BenchTrace is an open-source investigation workspace for hardware and embedded f
 
 **Development release — not yet declared production-complete.** See the [requirement audit](docs/REQUIREMENTS.md) and [executed milestones](ROADMAP.md). The initial supported diagnostic workflow targets ESP32/Arduino I2C failures. The current [v0.1.6-rc.1 GitHub release](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.6-rc.1) adds bounded OCR for scanned PDFs and discloses its six-page, English-only limit.
 
+The deterministic fixed-scenario diagnostic evaluation and its limits are documented in [ai-engine/evaluation](ai-engine/evaluation/README.md); GitHub CI runs it with the engine tests.
+
 ## What it does
 
 - Keeps private projects, files, investigations, observations and reports in a persistent workspace.

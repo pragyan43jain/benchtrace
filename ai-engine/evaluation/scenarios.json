@@ -4,69 +4,79 @@
     "firmware": "Wire.begin(21,22); Wire.beginTransmission(0x49);",
     "document": "7-bit I2C address: 0x48",
     "expected_first": "address",
-    "expected_contradiction": false
+    "expected_contradiction": false,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "matching_address",
     "firmware": "Wire.begin(21,22); Wire.beginTransmission(0x48);",
     "document": "7-bit I2C address: 0x48",
     "expected_first": null,
-    "expected_contradiction": true
+    "expected_contradiction": true,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "multiple_valid_addresses",
     "firmware": "Wire.begin(21,22); Wire.beginTransmission(0x49);",
     "document": "7-bit I2C address: 0x48 or 0x49 depending on A0 strap",
     "expected_first": null,
-    "expected_contradiction": true
+    "expected_contradiction": true,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "unknown_address_macro",
     "firmware": "Wire.begin(21,22); Wire.beginTransmission(runtimeAddress);",
     "document": "7-bit I2C address: 0x48",
     "expected_first": null,
-    "expected_contradiction": false
+    "expected_contradiction": false,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "eight_bit_address_not_comparable",
     "firmware": "Wire.begin(21,22); Wire.beginTransmission(0x48);",
     "document": "I2C address: 0x90 (8-bit write byte)",
     "expected_first": null,
-    "expected_contradiction": false
+    "expected_contradiction": false,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "missing_initialization",
     "firmware": "Wire.beginTransmission(0x49);",
     "document": "Operating temperature range is documented separately.",
     "expected_first": "transaction",
-    "expected_contradiction": false
+    "expected_contradiction": false,
+    "expected_test_terms": ["initialization", "endtransmission status"]
   },
   {
     "name": "constant_alias_address",
     "firmware": "#define DEVICE_ADDR SENSOR_ADDR\n#define SENSOR_ADDR 0x49\nvoid setup(){Wire.begin(21,22);Wire.beginTransmission(DEVICE_ADDR);}",
     "document": "7-bit I2C address: 0x48",
     "expected_first": "address",
-    "expected_contradiction": false
+    "expected_contradiction": false,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "address_strap_matches_alternate",
     "firmware": "Wire.beginTransmission(0x49);",
     "document": "Address is 0x48 with A0 low, 0x49 with A0 high.",
     "expected_first": null,
-    "expected_contradiction": true
+    "expected_contradiction": true,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "invalid_eight_bit_wire_target",
     "firmware": "Wire.beginTransmission(0x90);",
     "document": "7-bit I2C address: 0x48",
     "expected_first": "address",
-    "expected_contradiction": false
+    "expected_contradiction": false,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   },
   {
     "name": "esp_idf_ten_bit_not_compared_to_seven_bit_datasheet",
     "firmware": "const i2c_device_config_t d = {.dev_addr_length=I2C_ADDR_BIT_LEN_10,.device_address=0x1FF,.scl_speed_hz=100000};",
     "document": "7-bit I2C address: 0x48",
     "expected_first": null,
-    "expected_contradiction": false
+    "expected_contradiction": false,
+    "expected_test_terms": ["exact sensor variant", "address straps"]
   }
 ]
