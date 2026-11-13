@@ -1,0 +1,19 @@
+(kicad_sch
+  (version 20250114)
+  (generator "eeschema")
+  (uuid "4fbe4df3-4279-4d6e-9d52-85cf62d72b0f")
+  (paper "A4")
+  (lib_symbols
+    (symbol "BenchTrace:SIMULATED_I2C_SENSOR"
+      (symbol "SIMULATED_I2C_SENSOR_0_1"
+        (pin input line (name "SDA") (number "1"))
+        (pin input line (name "SCL") (number "2"))
+        (pin power_in line (name "VDD") (number "3"))
+        (pin power_in line (name "GND") (number "4")))))
+  (symbol
+    (lib_id "BenchTrace:SIMULATED_I2C_SENSOR")
+    (at 100 80 0)
+    (property "Reference" "U3")
+    (property "Value" "SIMULATED_I2C_SENSOR"))
+  (label "SDA")
+  (label "SCL"))

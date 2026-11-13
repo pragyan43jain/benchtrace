@@ -27,7 +27,7 @@ def test_blank_document_rejected(tmp_path):
 def test_schematic_scope():
     a=schematic('(kicad_sch (version 20250114)(symbol (property "Reference" "U1")(property "Value" "ESP32"))(label "SDA"))')
     assert a['components'][0]['reference']=='U1'
-    assert a['nets'][0]['nodes']==[] and 'only' in a['scope']
+    assert a['nets'][0]['nodes']==[] and 'not inferred' in a['scope']
 
 def test_schematic_extracts_library_pin_metadata_without_claiming_connectivity():
     text='''(kicad_sch

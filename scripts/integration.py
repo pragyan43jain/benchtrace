@@ -43,21 +43,24 @@ def main():
     demo=Path(__file__).resolve().parents[1]/'demo'/'esp32-i2c'
     c.request(root+'/preferences',{'threshold':1.65,'baud':9600,'cpol':1,'cpha':1},method='PATCH')
     assert c.request(root)['project']['preferences']['baud']==9600
-    c.upload(project,demo/'initial-evidence.zip');c.upload(project,demo/'sensor-datasheet.txt','datasheet')
+    c.upload(project,demo/'initial-evidence.zip');c.upload(project,demo/'sensor-symbols.kicad_sch','schematic');c.upload(project,demo/'sensor-datasheet.txt','datasheet')
     c.upload(project,demo/'sensor-model.pdf','datasheet')
     c.upload(project,demo/'verification.csv','measurement')
     deadline=time.monotonic()+180
     while time.monotonic()<deadline:
         files=c.request(root)['files']
         if any(f['status']=='failed' for f in files):raise AssertionError(files)
-        if len(files)==8 and all(f['status']=='ready' for f in files):break
+        if len(files)==9 and all(f['status']=='ready' for f in files):break
         time.sleep(2)
     else:raise AssertionError('Processing timeout')
     wave=next(f for f in files if f['name']=='failure.csv')
     stranger.request(root+'/files/'+wave['id'],expected=404)
     analysis=c.request(root+'/files/'+wave['id'])['analysis'];assert analysis['protocols']['i2c']['frames'][0]['address']==0x49
     assert analysis['protocols']['i2c']['frames'][0]['bytes'][0]['ack'] is False
-    assert len(c.request(root+'/components'))==4
+    components=c.request(root+'/components')
+    assert len(components)==5
+    symbol=next(x for x in components if x['reference']=='U3')
+    assert symbol['properties']['pins'][0]=={'number':'1','name':'SDA','electrical_type':'input'}
     assert len(c.request(root+'/history'))>=5
     stranger.request(root+'/components',expected=404)
     comparison=c.request(root+'/compare',{'left':wave['id'],'right':wave['id'],'channel':'sda'})
