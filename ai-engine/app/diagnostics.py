@@ -78,12 +78,12 @@ def diagnose(files, tests=None, problem=""):
                     value=re.fullmatch(r'(?:GPIO)?(\d+)',node['pin'],re.I)
                     if value:expected[name]=int(value[1])
         if len(expected)==2:
-            cite=dict(source,excerpt=f"Exported ESP32 nets: SDA pin {expected['SDA']}, SCL pin {expected['SCL']}; physical wiring unverified")
+            cite=dict(source,excerpt=f"Extracted ESP32 nets: SDA pin {expected['SDA']}, SCL pin {expected['SCL']} from {source['source']}; physical wiring unverified")
             for values,fw_source in pins:
                 if len(values)>=2 and None not in values[:2]:
                     (pin_against if values[:2]==[expected['SDA'],expected['SCL']] else pin_support).extend([fw_source,cite])
     add('pins','SDA/SCL routing or initialization is inconsistent',pin_support,pin_against,
-        'Compare Wire.begin SDA/SCL arguments with exported schematic nets, then check continuity with power disconnected.',
+        'Compare Wire.begin SDA/SCL arguments with extracted schematic or netlist connections, then check continuity with power disconnected.',
         'Measured wiring differs from configured pins and correcting it restores communication.',
         'Continuity and configured pins agree with the installed wiring.', ['Schematic labels do not prove physical connectivity.'])
     timing_support=[];timing_against=[]

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import pytest
-from app.evidence import firmware
+from app.evidence import firmware,schematic
 from app.diagnostics import diagnose
 SCENARIOS=json.loads((Path(__file__).parents[1]/'evaluation/scenarios.json').read_text())
 @pytest.mark.parametrize('case',SCENARIOS,ids=[x['name'] for x in SCENARIOS])
@@ -38,3 +38,28 @@ def test_electrical_recommendations_include_relevant_safety_limits():
     assert 'isolated' in power and 'Do not probe mains' in power
     assert 'power removed' in pullups
     assert 'power disconnected' in pins
+
+def test_geometric_schematic_nets_correlate_with_firmware_pin_setup():
+    circuit=schematic('''(kicad_sch (version 20250114)
+      (lib_symbols
+        (symbol "Demo:ESP32" (symbol "ESP32_1_1"
+          (pin passive line (at 0 0 0) (length 2.54) (name "SDA" (effects (font (size 1 1)))) (number "21" (effects (font (size 1 1)))))
+          (pin passive line (at 0 5 0) (length 2.54) (name "SCL" (effects (font (size 1 1)))) (number "22" (effects (font (size 1 1)))))))
+        (symbol "Demo:SENSOR" (symbol "SENSOR_1_1"
+          (pin passive line (at 0 0 0) (length 2.54) (name "SDA" (effects (font (size 1 1)))) (number "1" (effects (font (size 1 1)))))
+          (pin passive line (at 0 5 0) (length 2.54) (name "SCL" (effects (font (size 1 1)))) (number "2" (effects (font (size 1 1))))))))
+      (symbol (lib_id "Demo:ESP32") (at 100 100 0) (unit 1) (property "Reference" "U1") (property "Value" "ESP32-WROOM"))
+      (symbol (lib_id "Demo:SENSOR") (at 110 100 0) (unit 1) (property "Reference" "U3") (property "Value" "I2C sensor"))
+      (label "SDA" (at 100 100 0) (effects (font (size 1 1))) (uuid "l1"))
+      (label "SDA" (at 110 100 0) (effects (font (size 1 1))) (uuid "l2"))
+      (label "SCL" (at 100 105 0) (effects (font (size 1 1))) (uuid "l3"))
+      (label "SCL" (at 110 105 0) (effects (font (size 1 1))) (uuid "l4")))''')
+    files=[{'id':'circuit','name':'board.kicad_sch','analysis':circuit},
+           {'id':'firmware','name':'firmware.ino','analysis':firmware('Wire.begin(19,18);')}]
+    result=diagnose(files)
+    pins=next(h for h in result['hypotheses'] if h['key']=='pins')
+    assert pins['supporting_evidence']
+    assert any('SDA pin 21, SCL pin 22 from board.kicad_sch' in e['excerpt'] for e in pins['supporting_evidence'])
+    matching=diagnose([files[0],{'id':'firmware','name':'firmware.ino','analysis':firmware('Wire.begin(21,22);')}])
+    aligned=next(h for h in matching['hypotheses'] if h['key']=='pins')
+    assert not aligned['supporting_evidence'] and aligned['contradictory_evidence']
