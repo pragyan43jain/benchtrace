@@ -4,7 +4,7 @@
 
 BenchTrace is an open-source investigation workspace for hardware and embedded firmware failures. It connects source code, circuit connectivity, component documentation, and measured signals so an engineer can evaluate competing causes and choose a verification test.
 
-**Stable release for the documented initial scope.** The explicit Definition of Done checks are verified for the supported formats and ESP32/Arduino I2C workflow; this does not claim complete C++ or KiCad coverage, physical hardware validation, or a hosted public service. See the [requirement audit](docs/REQUIREMENTS.md), [executed milestones](ROADMAP.md), and [v0.1.7 GitHub release](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.7). This release includes bounded OCR and supported KiCad single-axis mirrored symbol pin transforms.
+**Stable release for the documented initial scope.** The explicit Definition of Done checks are verified for the supported formats and ESP32/Arduino I2C workflow; this does not claim complete C++ or KiCad coverage, physical hardware validation, or a hosted public service. See the [requirement audit](docs/REQUIREMENTS.md), [executed milestones](ROADMAP.md), and [v0.1.8 GitHub release](https://github.com/pragyan43jain/benchtrace/releases/tag/v0.1.8). v0.1.8 updates the image-release automation; the debugging features and limits are unchanged from v0.1.7, including bounded OCR and supported KiCad single-axis mirrored symbol pin transforms.
 
 The deterministic fixed-scenario diagnostic evaluation and its limits are documented in [ai-engine/evaluation](ai-engine/evaluation/README.md); GitHub CI runs it with the engine tests.
 
@@ -59,11 +59,11 @@ Open **http://localhost:8080**, create an account, and create a project. The set
 
 Only the web service is published, on loopback. For a public deployment, configure HTTPS termination, the exact `APP_ORIGIN`, `COOKIE_SECURE=true`, backups and operational monitoring. Read [SECURITY.md](SECURITY.md). No public production instance is claimed.
 
-To run the published stable release instead of building from source, use Docker Compose V2 with support for the `!reset` merge tag, set `BENCHTRACE_VERSION` to `v0.1.7`, and use the published-image overlay:
+To run the published stable release instead of building from source, use Docker Compose V2 with support for the `!reset` merge tag, set `BENCHTRACE_VERSION` to `v0.1.8`, and use the published-image overlay:
 
 ```sh
-BENCHTRACE_VERSION=v0.1.7 docker compose -f compose.yaml -f compose.published.yaml pull
-BENCHTRACE_VERSION=v0.1.7 docker compose -f compose.yaml -f compose.published.yaml up -d
+BENCHTRACE_VERSION=v0.1.8 docker compose -f compose.yaml -f compose.published.yaml pull
+BENCHTRACE_VERSION=v0.1.8 docker compose -f compose.yaml -f compose.published.yaml up -d
 ```
 
 ## Reproduce the ESP32 I2C failure
