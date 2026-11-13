@@ -108,7 +108,8 @@ export function Knowledge({
             installation is unverified.
           </p>
           {components.length ? (
-            <table>
+            <div className="table-scroll">
+            <table className="component-table">
               <thead>
                 <tr>
                   <th>Reference</th>
@@ -137,6 +138,7 @@ export function Knowledge({
                 ))}
               </tbody>
             </table>
+            </div>
           ) : (
             <p>No supported circuit components have been imported.</p>
           )}

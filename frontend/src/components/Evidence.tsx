@@ -26,7 +26,8 @@ export function Evidence({ analysis: a }: { analysis: any }) {
         <>
           <Circuit analysis={a} />
           <h3>Components</h3>
-          <table>
+          <div className="table-scroll">
+          <table className="component-table">
             <thead>
               <tr>
                 <th>Reference</th>
@@ -56,6 +57,7 @@ export function Evidence({ analysis: a }: { analysis: any }) {
               ))}
             </tbody>
           </table>
+          </div>
           <h3>Nets and connectivity</h3>
           {a.nets.map((n: any, i: number) => (
             <div className="panel" key={i}>

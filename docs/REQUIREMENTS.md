@@ -35,7 +35,7 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 | Docker deployment | Running local stack, API integration passes | Verified local; public cloud hosting not configured or claimed |
 | CI/CD | CI runs; first run failed on now-fixed browser locator; tag image workflow exists | CI run 43373860041 green; prerelease image build/publish workflow 43374242750 green for all three images. Engine image local pull remains unverified |
 | Required docs/license/demo/screenshots | Docs exist; actual screenshots; disclosed simulation | README, reproducible PDF generator and screenshots complete; final status matrix remains open |
-| Responsive/accessibility/performance | Desktop workflow, mobile width assertion; lazy waveform code | Automated WCAG checks passed for landing/auth/project list desktop/mobile; four-test browser suite including ranking reassessment and owner-isolation passed locally and in CI run 43376992920 |
+| Responsive/accessibility/performance | Desktop workflow, mobile width assertion, scrollable component tables; lazy waveform code | Automated WCAG checks passed for landing/auth/project list desktop/mobile; four-test browser suite including component pins, ranking reassessment and owner-isolation passed locally; CI run 43376992920 passed the prior browser revision |
 
 ## Scope boundaries that remain explicit
 

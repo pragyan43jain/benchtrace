@@ -809,6 +809,14 @@ table {
   border-collapse: collapse;
   font-size: 12px;
 }
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.component-table {
+  min-width: 600px;
+  table-layout: auto;
+}
 th,
 td {
   text-align: left;
