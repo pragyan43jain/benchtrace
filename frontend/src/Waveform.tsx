@@ -255,7 +255,15 @@ export function Waveform({ analysis: a }: { analysis: any }) {
                 <>
                   <span>
                     Address{" "}
-                    <strong>0x{f.address.toString(16).padStart(2, "0")}</strong>{" "}
+                    {f.address_width ? `(${f.address_width}-bit) ` : ""}
+                    <strong>
+                      {f.address == null
+                        ? "unresolved"
+                        : `0x${f.address.toString(16).padStart(
+                            f.address_width === 10 ? 3 : 2,
+                            "0",
+                          )}`}
+                    </strong>{" "}
                     · {f.direction}
                   </span>
                   {f.bytes.map((b: any, j: number) => (

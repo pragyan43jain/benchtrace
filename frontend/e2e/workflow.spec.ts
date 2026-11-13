@@ -1,5 +1,27 @@
 import { test, expect } from "@playwright/test";
 import path from "node:path";
+
+function unresolvedTenBitReadCapture() {
+  const samples: number[][] = [];
+  const hold = (clock: number, data: number, count = 10) => {
+    for (let i = 0; i < count; i++) samples.push([clock * 3.3, data * 3.3]);
+  };
+  const send = (value: number, ack = true) => {
+    for (const bit of [...value.toString(2).padStart(8, "0"), ack ? "0" : "1"]) {
+      hold(0, Number(bit));
+      hold(1, Number(bit));
+    }
+  };
+  hold(1, 1);
+  hold(1, 0);
+  send(0xf5); // Ten-bit read prefix with no captured write-address phase.
+  send(0x35);
+  hold(0, 0);
+  hold(1, 0);
+  hold(1, 1);
+  return ["time,scl,sda", ...samples.map(([scl, sda], i) => `${(i * 0.5e-6).toFixed(9)},${scl},${sda}`)].join("\n");
+}
+
 test("complete engineering investigation in the browser", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -91,6 +113,29 @@ test("complete engineering investigation in the browser", async ({ page }) => {
     path: "../docs/waveform-studio.png",
     fullPage: true,
   });
+  await page.getByLabel("Evidence category").selectOption("measurement");
+  await page.getByLabel("Evidence file").setInputFiles({
+    name: "ten-bit-read.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(unresolvedTenBitReadCapture()),
+  });
+  await page.getByRole("button", { name: "Upload evidence" }).click();
+  await expect(
+    page.getByText("Evidence uploaded. Processing has started."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  const unresolvedCapture = page
+    .locator(".file-list button")
+    .filter({ hasText: "ten-bit-read.csv" });
+  await expect(unresolvedCapture).toContainText("ready", { timeout: 120000 });
+  await unresolvedCapture.click();
+  await expect(
+    page.getByText("Address (10-bit) unresolved · read", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/no matching acknowledged write-address phase/),
+  ).toBeVisible();
+  await expect(page.getByText("0x35 ACK", { exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Investigations", exact: true })
     .click();
