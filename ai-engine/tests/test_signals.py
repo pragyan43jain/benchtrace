@@ -142,16 +142,20 @@ def test_four_argument_wire_overload_is_not_assumed_master_pins():
     r=diagnose([dict(id='f',name='main.ino',analysis=firmware('Wire.begin(0x48,21,22,100000);'))])
     assert not next(h for h in r['hypotheses'] if h['key']=='pins')['supporting_evidence']
 
-def test_esp_idf_designated_i2c_configuration_is_extracted():
+def test_esp_idf_designated_i2c_configuration_and_gpio_macro_aliases_are_extracted():
     source='''
+#define I2C_MASTER_SDA_IO GPIO_NUM_21
+#define I2C_MASTER_SCL_IO GPIO_NUM_22
+#define SENSOR_ADDRESS 0x48
+#define SENSOR_CLOCK 100000
 const i2c_master_bus_config_t bus = {
   .i2c_port = I2C_NUM_0,
-  .sda_io_num = GPIO_NUM_21,
-  .scl_io_num = GPIO_NUM_22,
+  .sda_io_num = I2C_MASTER_SDA_IO,
+  .scl_io_num = I2C_MASTER_SCL_IO,
 };
 const i2c_device_config_t device = {
-  .device_address = 0x48,
-  .scl_speed_hz = 100000,
+  .device_address = SENSOR_ADDRESS,
+  .scl_speed_hz = SENSOR_CLOCK,
 };'''
     findings=firmware(source)['findings']
     bus=next(x for x in findings if x.get('source_api','').startswith('ESP-IDF') and x['type']=='i2c_begin')

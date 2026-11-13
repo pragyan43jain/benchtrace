@@ -54,8 +54,9 @@ def document(path):
 def firmware(text):
     # Strip comments but retain line count; deliberately avoid claiming AST-level understanding.
     clean=re.sub(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"',lambda m:''.join('\n' if c=='\n' else ' ' for c in m[0]),text,flags=re.S)
-    defines=dict(re.findall(r'^\s*#define\s+(\w+)\s+(0x[\da-fA-F]+|\d+)\b',clean,re.M))
-    defines.update(dict(re.findall(r'\b(?:constexpr|const)\s+(?:unsigned\s+)?(?:int|uint\d+_t|byte|auto)\s+(\w+)\s*=\s*(0x[\da-fA-F]+|\d+)\s*;',clean)))
+    numeric_or_alias=r'(?:0x[\da-fA-F]+|\d+|[A-Za-z_]\w*)'
+    defines=dict(re.findall(r'^\s*#define\s+(\w+)\s+('+numeric_or_alias+r')\b',clean,re.M))
+    defines.update(dict(re.findall(r'\b(?:constexpr|const)\s+(?:unsigned\s+)?(?:int|uint\d+_t|byte|auto)\s+(\w+)\s*=\s*('+numeric_or_alias+r')\s*;',clean)))
     def number(v):
         v=v.strip()
         for _ in range(8):
