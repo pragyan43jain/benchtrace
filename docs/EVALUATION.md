@@ -9,3 +9,5 @@ The end-to-end demo uses a fictional sensor model, ideal 0/3.3 V edges, a 2 MHz 
 KiCad schematic topology checks include distinct orthogonal wire crossings without junctions, explicit junction joins, rotated-symbol pin coordinates, the simulated sensor's four pin-to-label connections, and firmware SDA/SCL comparison against geometrically extracted ESP32 nets. The extraction intentionally does not cover hierarchy, buses, mirrored symbols or diagonal wires; exported netlists are used for full-project demo connectivity.
 
 Semantic retrieval is evaluated with a paraphrased supply-voltage query versus relevant and irrelevant text. This is a smoke evaluation, not a comprehensive electronics retrieval benchmark. See ROADMAP.md for actual executed results and remaining coverage.
+
+Optional-provider contract tests exercise valid citation selection, invented citation rejection, malformed provider responses, and the synthetic connectivity probe using a mocked compatible endpoint. No live external provider credentials are used by CI.

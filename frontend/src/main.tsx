@@ -51,6 +51,7 @@ function App() {
     [knowledge, setKnowledge] = useState<any[]>([]),
     [retrieval, setRetrieval] = useState<any>(null),
     [config, setConfig] = useState<any>(null),
+    [providerCheck, setProviderCheck] = useState<any>(null),
     [comparison, setComparison] = useState<any>(null);
   async function run(fn: () => Promise<void>) {
     setError("");
@@ -1329,6 +1330,32 @@ function App() {
                       server. Provider output can select citations but cannot
                       add technical claims. Secrets never reach this browser.
                     </p>
+                    <p className="muted">
+                      Connection checks send only a synthetic citation marker,
+                      never project files or uploaded evidence.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        run(async () =>
+                          setProviderCheck(
+                            await api("/config/provider-test", {}, "POST"),
+                          ),
+                        )
+                      }
+                    >
+                      Test provider connection
+                    </Button>
+                    {providerCheck && (
+                      <p
+                        role="status"
+                        className={providerCheck.ok ? "badge green" : "muted"}
+                      >
+                        {providerCheck.message}
+                      </p>
+                    )}
                     <a href="https://github.com/pragyan43jain/benchtrace/blob/main/ROADMAP.md">
                       View implementation status ↗
                     </a>

@@ -48,6 +48,11 @@ def main():
     stamp=uuid.uuid4().hex[:12];creds={'email':f'test-{stamp}@example.test','password':'integration-passphrase-123','name':'Integration Engineer'}
     c.request('/auth/register',creds,origin='https://untrusted.example',expected=403)
     c.request('/auth/register',creds);assert c.request('/auth/me')['email']==creds['email']
+    config=c.request('/config')
+    provider_check=c.request('/config/provider-test',{})
+    assert provider_check['configured']==bool(config['provider_configured'])
+    assert isinstance(provider_check['ok'],bool)
+    assert 'api_key' not in json.dumps(provider_check).lower()
     assert list(c.jar) and all('HttpOnly' in x._rest for x in c.jar)
     c.request('/projects',{'name':''},expected=400)
     project=c.request('/projects',{'name':'SIMULATED ESP32 integration '+stamp,'platform':'ESP32','description':'Automated reproducible verification'},expected=201)['id']
@@ -121,5 +126,5 @@ def main():
     c.request('/auth/logout',{});c.request('/auth/me',expected=401)
     c.request('/auth/login',{'email':creds['email'],'password':'wrong-password'},expected=401)
     c.request('/auth/login',{'email':creds['email'],'password':creds['password']});assert c.request(ir)['investigation']['status']=='resolved'
-    print('PASS: auth, CSRF, project management, owner isolation, ZIP upload, background processing, waveform, retrieval, diagnosis, test persistence, report, knowledge, logout/login.')
+    print('PASS: auth, CSRF, project management, owner isolation, ZIP upload, background processing, seven/ten-bit waveform decoding, provider connection check, retrieval, diagnosis, test persistence, report, knowledge, logout/login.')
 if __name__=='__main__':main()

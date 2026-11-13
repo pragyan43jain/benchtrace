@@ -199,6 +199,11 @@ test("complete engineering investigation in the browser", async ({ page }) => {
     path: "../docs/mobile-workspace.png",
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Test provider connection" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    /No compatible provider is configured|Provider connection check succeeded|Provider is configured, but the check failed/,
+  );
   expect(errors).toEqual([]);
 });
 

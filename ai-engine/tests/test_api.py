@@ -3,11 +3,15 @@ from app.main import app
 
 def test_internal_auth_and_path_validation(monkeypatch):
     monkeypatch.setenv('ENGINE_TOKEN','internal-secret')
+    monkeypatch.delenv('LLM_BASE_URL',raising=False)
     with TestClient(app) as client:
         assert client.post('/embed',json={'text':'test'}).status_code==401
         response=client.post('/process',headers={'Authorization':'Bearer internal-secret'},json={'storage_key':'../../etc/passwd'})
         assert response.status_code==422
         assert client.post('/config',headers={'Authorization':'Bearer internal-secret'},json={}).status_code==200
+        assert client.post('/provider/test',json={}).status_code==401
+        response=client.post('/provider/test',headers={'Authorization':'Bearer internal-secret'},json={})
+        assert response.status_code==200 and response.json()['configured'] is False
 
 def test_embedding_identity_separates_lexical_and_semantic(monkeypatch):
     import json

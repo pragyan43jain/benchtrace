@@ -12,6 +12,7 @@ Base path: `/api`. JSON responses except the Markdown report. Errors: `{"error":
 | PATCH | `/auth/me` | `{name,current_password,new_password}`; password change revokes all old sessions |
 | GET | `/activity` | Recent owned project file/investigation activity |
 | GET | `/config` | Safe analysis configuration; never returns provider credentials |
+| POST | `/config/provider-test` | Authenticated, rate-limited synthetic provider citation-selection check; sends no project evidence |
 | GET/POST | `/projects` | List owned projects / create `{name,description,platform}` |
 | GET/PATCH | `/projects/:p` | Project with files/investigations / update project fields |
 | PATCH | `/projects/:p/preferences` | `{threshold,baud,cpol,cpha}` defaults for future uploads |

@@ -38,6 +38,7 @@ func (s *Server) Routes() http.Handler {
 	m.Handle("GET /api/auth/me", s.require(s.me))
 	m.Handle("PATCH /api/auth/me", s.require(s.profile))
 	m.Handle("GET /api/config", s.require(s.configuration))
+	m.Handle("POST /api/config/provider-test", s.require(s.providerTest))
 	m.Handle("GET /api/projects", s.require(s.projects))
 	m.Handle("GET /api/activity", s.require(s.activity))
 	m.Handle("POST /api/projects", s.require(s.createProject))
@@ -125,7 +126,10 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 			}
 			limit := int64(600)
 			bucket := "api"
-			if strings.HasPrefix(r.URL.Path, "/api/auth/") && r.Method != "GET" {
+			if r.URL.Path == "/api/config/provider-test" && r.Method == "POST" {
+				limit = 3
+				bucket = "provider-test"
+			} else if strings.HasPrefix(r.URL.Path, "/api/auth/") && r.Method != "GET" {
 				limit = 20
 				bucket = "auth"
 			}

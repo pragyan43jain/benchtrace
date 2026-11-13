@@ -41,6 +41,10 @@ class AnswerRequest(BaseModel):
 def generate_answer(request:AnswerRequest):
     from .answers import answer
     return answer(request.question,request.evidence)
+@app.post('/provider/test',dependencies=[Depends(authorize)])
+def provider_test():
+    from .answers import provider_connection_check
+    return provider_connection_check()
 @app.post('/config',dependencies=[Depends(authorize)])
 def config():return {'embedding_version':embedding_version(),'embedding_mode':os.getenv('EMBEDDING_MODE','semantic'),'model':'BAAI/bge-small-en-v1.5','provider_configured':bool(os.getenv('LLM_BASE_URL')),'diagnostics':'deterministic evidence rules','decoder_defaults':{'threshold':1.65,'baud':115200,'cpol':0,'cpha':0}}
 

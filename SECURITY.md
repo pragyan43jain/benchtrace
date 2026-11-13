@@ -9,9 +9,10 @@ Implemented protections:
 - Parameterized SQL, bounded JSON/multipart bodies, UTF-8/content validation and UUID storage paths.
 - ZIP entry count, expanded-size, traversal, symlink and duplicate-name checks. Uploaded firmware is never executed.
 - Internal engine bearer authentication; read-only source volume and engine root filesystem; container CPU/memory limits.
-- Atomic Redis-backed rate limits (20 authentication mutations/minute and 600 other API requests/minute per proxy peer) fail closed when Redis is unavailable. File storage is limited to 200 files/project and 1 GiB/account.
+- Atomic Redis-backed rate limits (20 authentication mutations/minute, 3 provider connection checks/minute, and 600 other API requests/minute per proxy peer) fail closed when Redis is unavailable. File storage is limited to 200 files/project and 1 GiB/account.
 - Browser CSP, no raw HTML rendering of uploaded text, restrictive framing and content-sniffing headers.
 - Optional LLM only selects existing citation IDs. It cannot supply source text, measured values or confidence scores. Provider secrets remain server-side.
+- The authenticated provider connection check submits only a fixed synthetic citation marker, never uploaded engineering evidence. It returns a generic result without forwarding provider response bodies or credentials.
 
 ## Before public deployment
 

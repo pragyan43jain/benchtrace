@@ -14,6 +14,14 @@ func (s *Server) configuration(w http.ResponseWriter, r *http.Request) {
 	}
 	respond(w, 200, out)
 }
+func (s *Server) providerTest(w http.ResponseWriter, r *http.Request) {
+	var out map[string]any
+	if e := s.engine(r.Context(), "/provider/test", map[string]any{}, &out); e != nil {
+		fail(w, 502, "Provider connection check unavailable")
+		return
+	}
+	respond(w, 200, out)
+}
 func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 	var p struct {
 		Name            string `json:"name"`
