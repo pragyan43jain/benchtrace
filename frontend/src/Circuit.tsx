@@ -8,8 +8,8 @@ export function Circuit({ analysis: a }: { analysis: any }) {
   return (
     <>
       <p className="muted">
-        Select a net to inspect connected component pins. Connectivity comes
-        from the uploaded netlist; it does not establish physical wiring.
+        Select a net to inspect extracted component pin connections. This
+        graph describes the uploaded evidence, not physical wiring.
       </p>
       <div className="row">
         {a.nets.map((n: any, i: number) => (

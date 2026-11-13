@@ -72,6 +72,8 @@ test("complete engineering investigation in the browser", async ({ page }) => {
   await schematic.click();
   await expect(page.getByText("1 · SDA (input)", { exact: true })).toBeVisible();
   await expect(page.getByText(/Pin connectivity is not inferred/)).toBeVisible();
+  await page.getByRole("button", { name: "SDA", exact: true }).click();
+  await expect(page.getByText("U3 · pin 1", { exact: true })).toBeVisible();
   await page
     .locator(".file-list button")
     .filter({ hasText: "failure.csv" })

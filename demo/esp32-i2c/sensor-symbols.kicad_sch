@@ -59,14 +59,34 @@
         (path "/4fbe4df3-4279-4d6e-9d52-85cf62d72b0f"
           (reference "U3")
           (unit 1)))))
+  (wire (pts (xy 95 80) (xy 100 80))
+    (stroke (width 0) (type default))
+    (uuid "16be4cf2-f4b8-49d0-a1a3-5269f3b04001"))
+  (wire (pts (xy 95 82.54) (xy 100 82.54))
+    (stroke (width 0) (type default))
+    (uuid "16be4cf2-f4b8-49d0-a1a3-5269f3b04002"))
+  (wire (pts (xy 95 85.08) (xy 100 85.08))
+    (stroke (width 0) (type default))
+    (uuid "16be4cf2-f4b8-49d0-a1a3-5269f3b04003"))
+  (wire (pts (xy 95 87.62) (xy 100 87.62))
+    (stroke (width 0) (type default))
+    (uuid "16be4cf2-f4b8-49d0-a1a3-5269f3b04004"))
   (label "SDA"
-    (at 110 80 0)
+    (at 95 80 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid "51072653-dc08-45a0-a314-3e10cb1bed95"))
   (label "SCL"
-    (at 110 82.54 0)
+    (at 95 82.54 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid "84f83222-2480-42e2-9ad2-d2790b253725"))
+  (label "VDD"
+    (at 95 85.08 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid "16be4cf2-f4b8-49d0-a1a3-5269f3b04005"))
+  (label "GND"
+    (at 95 87.62 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid "16be4cf2-f4b8-49d0-a1a3-5269f3b04006"))
   (sheet_instances
     (path "/"
       (page "1")))

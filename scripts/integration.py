@@ -60,7 +60,11 @@ def main():
     components=c.request(root+'/components')
     assert len(components)==5
     symbol=next(x for x in components if x['reference']=='U3')
-    assert symbol['properties']['pins'][0]=={'number':'1','name':'SDA','electrical_type':'input'}
+    assert {k:symbol['properties']['pins'][0][k] for k in ('number','name','electrical_type')}=={'number':'1','name':'SDA','electrical_type':'input'}
+    assert symbol['properties']['pins'][0]['sheet_position']==[100.0,80.0]
+    sch=next(f for f in files if f['name']=='sensor-symbols.kicad_sch')
+    schematic_analysis=c.request(root+'/files/'+sch['id'])['analysis']
+    assert any(n['name']=='SDA' and {'reference':'U3','pin':'1'} in n['nodes'] for n in schematic_analysis['nets'])
     assert len(c.request(root+'/history'))>=5
     stranger.request(root+'/components',expected=404)
     comparison=c.request(root+'/compare',{'left':wave['id'],'right':wave['id'],'channel':'sda'})

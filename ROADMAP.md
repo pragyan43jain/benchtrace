@@ -94,3 +94,10 @@ Verified public GHCR manifests for backend, frontend and AI engine at `v0.1.0-rc
 ## Milestone 13 — final audit CI pass
 
 The complete workflow passed on commit `404018e` as run **43382157097**: Go race tests and vet, frontend production build/unit tests/audit, container build, 63 engine tests, API and security integration, and Playwright browser regression. The workflow emits only upstream GitHub Action/runner deprecation notices. Local Compose services are healthy.
+
+
+## Milestone 14 — bounded KiCad schematic topology
+
+The `.kicad_sch` parser now derives root-sheet nets from orthogonal wire segments, symbol pin coordinates, labels, explicit junctions and power-symbol values for unmirrored symbols at right-angle rotations. Unmarked interior crossings remain separate; unsupported buses, hierarchy, mirrored symbols, diagonal wires and non-right-angle transforms are disclosed. Topology operation limits discard the derived graph rather than returning a partial result. The demo sensor schematic now connects all four pins to local labels, while `circuit.net` continues to provide assumed full-project connectivity.
+
+Verification against the pinned engine image: **67 engine tests passed** (one upstream Starlette/httpx deprecation warning), including separate crossing, junction, rotated-pin and topology-budget fixtures. The parser also extracted six components and eleven pin connections across four nets from [KiCad's published rectifier schematic](https://github.com/KiCad/kicad-source-mirror/blob/master/demos/simulation/rectifier/rectifier.kicad_sch). Rebuilt local API integration and negative security checks passed; Playwright **4 passed**, including selecting `SDA` and seeing U3 pin 1. Frontend unit tests **2 passed**. CI for the feature commit is pending.

@@ -162,35 +162,195 @@ def schematic(text):
             nets.append(dict(name=str(name[1]) if name else '',nodes=nodes))
         scope='KiCad exported netlist connectivity; no inferred physical assembly or electrical behavior'
     else:
-        # KiCad embeds library symbol definitions in the schematic. Their pins
-        # describe symbol metadata; without wire geometry/net assignment they
-        # do not establish electrical connectivity.
-        def descendants(x, key):
-            if not isinstance(x, list): return []
-            found = [x] if tag(x) == key else []
-            for value in x[1:]: found.extend(descendants(value, key))
-            return found
+        # KiCad embeds library symbol definitions in the schematic. Pin
+        # metadata alone does not establish connectivity; the bounded geometric
+        # pass below relates pin endpoints to wires, labels, and junctions.
         libraries={}
         lib_root=one(tree,'lib_symbols')
         for definition in children(lib_root or [],'symbol'):
             lib_id=str(definition[1]) if len(definition)>1 else ''
             pins=[]
-            for pin in descendants(definition,'pin'):
-                name,number=one(pin,'name'),one(pin,'number')
-                if name and number and len(name)>1 and len(number)>1:
-                    kind=str(pin[1]) if len(pin)>1 else ''
-                    pins.append(dict(number=str(number[1]),name=str(name[1]),electrical_type=kind))
+            for part in children(definition,'symbol'):
+                part_name=str(part[1]) if len(part)>1 else ''
+                unit_match=re.search(r'_(\d+)_\d+$',part_name)
+                unit=int(unit_match[1]) if unit_match else None
+                for pin in children(part,'pin'):
+                    name,number,position=one(pin,'name'),one(pin,'number'),one(pin,'at')
+                    if name and number and len(name)>1 and len(number)>1:
+                        kind=str(pin[1]) if len(pin)>1 else ''
+                        local_at=None
+                        if position and len(position)>=3:
+                            try: local_at=(float(position[1]),float(position[2]))
+                            except (TypeError,ValueError): pass
+                        pins.append(dict(number=str(number[1]),name=str(name[1]),electrical_type=kind,
+                                         unit=unit,local_at=local_at))
             libraries[lib_id]=pins
+        # Connectivity for the root sheet only. Coordinates and symbol pins
+        # follow KiCad's S-expression format. Mirrored symbols and hierarchy
+        # are deliberately excluded until their transforms are implemented.
+        wires=[]
+        for wire in children(tree,'wire'):
+            points=[]
+            pts=one(wire,'pts')
+            for point in children(pts or [],'xy'):
+                if len(point)>=3:
+                    try: points.append((float(point[1]),float(point[2])))
+                    except (TypeError,ValueError): pass
+            wires.extend((points[i],points[i+1]) for i in range(len(points)-1))
+        anchors=[]
+        labels=[]
+        unlocated_labels=[]
+        for key,scope_name in (('label','local'),('global_label','global'),('hierarchical_label','hierarchical')):
+            for label in children(tree,key):
+                pos=one(label,'at')
+                if len(label)>1 and pos and len(pos)>=3:
+                    try:
+                        point=(float(pos[1]),float(pos[2])); name=str(label[1])
+                        anchors.append((point,('label',name)))
+                        labels.append((point,name,scope_name))
+                    except (TypeError,ValueError): unlocated_labels.append(name)
+                elif len(label)>1:
+                    unlocated_labels.append(str(label[1]))
+        junctions=[]
+        for junction in children(tree,'junction'):
+            pos=one(junction,'at')
+            if pos and len(pos)>=3:
+                try:
+                    point=(float(pos[1]),float(pos[2])); junctions.append(point)
+                    anchors.append((point,('junction',len(junctions))))
+                except (TypeError,ValueError): pass
+        def get_netlist_pin_position(symbol, pin):
+            pos=one(symbol,'at')
+            if not pos or len(pos)<4 or not pin.get('local_at'): return None
+            if one(symbol,'mirror'): return None
+            try:
+                origin=(float(pos[1]),float(pos[2])); angle=float(pos[3])%360
+                x,y=pin['local_at']
+            except (TypeError,ValueError): return None
+            # KiCad schematic coordinates use a downward-positive sheet Y axis.
+            # The supported rotations are the format's right angles.
+            if angle==0: dx,dy=x,y
+            elif angle==90: dx,dy=y,-x
+            elif angle==180: dx,dy=-x,-y
+            elif angle==270: dx,dy=-y,x
+            else: return None
+            return (origin[0]+dx,origin[1]+dy)
+        component_pin_anchors=[]
         for symbol in children(tree,'symbol'):
             props={str(p[1]):str(p[2]) for p in children(symbol,'property') if len(p)>=3}
             lib_id=one(symbol,'lib_id')
             if 'Reference' in props:
+                library_id=str(lib_id[1]) if lib_id and len(lib_id)>1 else ''
+                try: unit=int(one(symbol,'unit')[1])
+                except (TypeError,IndexError): unit=1
+                pins=[p.copy() for p in libraries.get(library_id,[]) if p.get('unit') in (0,unit)]
+                for pin in pins:
+                    point=get_netlist_pin_position(symbol,pin)
+                    if point is not None:
+                        pin['sheet_position']=[round(point[0],4),round(point[1],4)]
+                        component_pin_anchors.append((point,('pin',props['Reference'],pin['number'])))
+                mirror=one(symbol,'mirror')
+                position_supported=bool(pins) and all('sheet_position' in p for p in pins)
                 components.append(dict(reference=props['Reference'],value=props.get('Value',''),properties=props,
-                                       library_id=str(lib_id[1]) if lib_id and len(lib_id)>1 else '',
-                                       pins=libraries.get(str(lib_id[1]),[]) if lib_id and len(lib_id)>1 else []))
-        for key in ('label','global_label','hierarchical_label'):
-            for label in children(tree,key): nets.append(dict(name=str(label[1]),nodes=[]))
-        scope='KiCad symbol properties and embedded pin name/number metadata plus labels. Pin connectivity is not inferred; export a KiCad S-expression .net file for reliable net connectivity.'
+                                       library_id=library_id,pins=[{k:v for k,v in p.items() if k not in ('unit','local_at')} for p in pins],
+                                       pin_positions_supported=position_supported and not bool(mirror)))
+                # Power symbols name a net through their value and single pin.
+                if props['Reference'].startswith('#PWR') and props.get('Value') and len(pins)==1:
+                    point=get_netlist_pin_position(symbol,pins[0])
+                    if point is not None:
+                        anchors.append((point,('label',props['Value'])))
+                        labels.append((point,props['Value'],'power_symbol'))
+        anchors.extend(component_pin_anchors)
+        # Use a disjoint-set over wire endpoint coordinates.  Wires connect at
+        # endpoints, pin/label locations and explicit junctions; interior-to-
+        # interior crossings remain separate when no junction is drawn.
+        endpoints=[point for segment in wires for point in segment]
+        points=[]; seen_points=set()
+        def point_key(point): return (round(point[0],4),round(point[1],4))
+        for point in endpoints+[p for p,_ in anchors]:
+            key=point_key(point)
+            if key not in seen_points:
+                seen_points.add(key); points.append(key)
+        parent=list(range(len(points)))
+        def find(index):
+            while parent[index]!=index:
+                parent[index]=parent[parent[index]]; index=parent[index]
+            return index
+        def union(a,b):
+            a,b=find(a),find(b)
+            if a!=b: parent[b]=a
+        indices={point:i for i,point in enumerate(points)}
+        horizontal={}; vertical={}; unsupported_wire_geometry=False
+        for a,b in wires:
+            if abs(a[1]-b[1])<=1e-4:
+                horizontal.setdefault(round(a[1],4),[]).append((min(a[0],b[0]),max(a[0],b[0])))
+            elif abs(a[0]-b[0])<=1e-4:
+                vertical.setdefault(round(a[0],4),[]).append((min(a[1],b[1]),max(a[1],b[1])))
+            else:
+                unsupported_wire_geometry=True
+        horizontal_points={}; vertical_points={}
+        for key in points:
+            horizontal_points.setdefault(key[1],[]).append(key[0])
+            vertical_points.setdefault(key[0],[]).append(key[1])
+        for values in list(horizontal_points.values())+list(vertical_points.values()): values.sort()
+        from bisect import bisect_left,bisect_right
+        connection_operations=0; connectivity_limit_hit=len(wires)>10_000 or len(anchors)>20_000
+        for a,b in ([] if connectivity_limit_hit else wires):
+            if abs(a[1]-b[1])<=1e-4:
+                ys=round(a[1],4); row=horizontal_points.get(ys,[])
+                lo=bisect_left(row,min(a[0],b[0])-1e-4); hi=bisect_right(row,max(a[0],b[0])+1e-4)
+                candidates=[(x,ys) for x in row[lo:hi]]
+            elif abs(a[0]-b[0])<=1e-4:
+                xs=round(a[0],4); column=vertical_points.get(xs,[])
+                lo=bisect_left(column,min(a[1],b[1])-1e-4); hi=bisect_right(column,max(a[1],b[1])+1e-4)
+                candidates=[(xs,y) for y in column[lo:hi]]
+            else:
+                continue
+            # Every segment is continuous. Any endpoint/anchor that lies on it
+            # attaches to that segment; an interior crossing stays open unless
+            # an endpoint, pin, label, or explicit junction is there.
+            for key in candidates[1:]: union(indices[candidates[0]],indices[key])
+            connection_operations+=len(candidates)
+            if connection_operations>500_000:
+                connectivity_limit_hit=True
+                break
+        # Repeated same-sheet labels name the same net even when separated.
+        by_label={}
+        for point,meta in anchors:
+            if meta[0]=='label':
+                name=meta[1]
+                if name in by_label: union(indices[point_key(point)],indices[point_key(by_label[name])])
+                else: by_label[name]=point
+        net_nodes={}; net_names={}
+        for point,meta in anchors:
+            if meta[0]=='pin':
+                root=find(indices[point_key(point)])
+                net_nodes.setdefault(root,[]).append(dict(reference=meta[1],pin=meta[2]))
+        for point,name,scope_name in labels:
+            root=find(indices[point_key(point)])
+            net_names.setdefault(root,[]).append(name)
+        roots=set(net_nodes)|set(net_names)
+        if connectivity_limit_hit:
+            # Discard partial topology rather than returning a misleading graph.
+            net_nodes={}; net_names={}; roots=set()
+        for root in sorted(roots):
+            root=find(root); names=sorted(set(net_names.get(root,[])))
+            nodes=sorted(net_nodes.get(root,[]),key=lambda n:(n['reference'],n['pin']))
+            if nodes or names:
+                nets.append(dict(name=' / '.join(names) if names else f'unnamed-{len(nets)+1}',nodes=nodes,
+                                 name_source='schematic label' if names else 'geometric connectivity',
+                                 power_or_ground=bool(names and re.search(r'(?i)(GND|VCC|VDD|3V3|5V)', ' '.join(names)))))
+        present_names={name for net in nets for name in net['name'].split(' / ')}
+        for name in sorted(set(unlocated_labels)-present_names):
+            nets.append(dict(name=name,nodes=[],name_source='label without coordinates',power_or_ground=bool(re.search(r'(?i)(GND|VCC|VDD|3V3|5V)',name))))
+        scope=('KiCad root-sheet orthogonal wire/pin/label connectivity for unmirrored symbols at right-angle rotations. '
+               'Pin connectivity is not inferred from pin names alone; '
+               'interior crossings without an endpoint, pin, label, or explicit junction are kept separate. Hierarchical sheets, buses, '
+               'mirrored symbols and non-right-angle transforms are not resolved. '
+               + ('A topology operation limit was exceeded, so this schematic has no derived net graph. ' if connectivity_limit_hit else '')
+               + ('Diagonal wires are ignored. ' if unsupported_wire_geometry else '')
+               + 'Exported .net is recommended '
+               'for authoritative connectivity.')
     for n in nets: n['power_or_ground']=bool(re.search(r'(?i)(GND|VCC|VDD|3V3|5V)',n['name']))
     return dict(kind='circuit',components=components,nets=nets,scope=scope)
 

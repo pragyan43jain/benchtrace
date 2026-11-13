@@ -11,7 +11,7 @@ BenchTrace is an open-source investigation workspace for hardware and embedded f
 - Keeps private projects, files, investigations, observations and reports in a persistent workspace.
 - Extracts PDF/text evidence with page references and searches it using a local semantic embedding model and pgvector.
 - Analyzes sampled CSV waveforms: voltage statistics, sampling quality, prominence-based peak and trough counts, FFT, noise estimates and bounded I2C/UART/SPI decoding.
-- Finds recognizable Arduino firmware configuration and imports KiCad netlist connectivity plus embedded schematic pin metadata.
+- Finds recognizable Arduino firmware configuration and imports KiCad netlists plus supported root-sheet schematic wires, labels, symbol pins and pin-to-net relationships.
 - Ranks competing hypotheses using a documented evidence rule, with supporting sources, contradictions, unknowns and confirm/reject experiments.
 - Records user-performed tests, preserves investigation history, exports Markdown reports and saves reusable knowledge.
 
@@ -64,7 +64,7 @@ python3 demo/generate.py
 ```
 
 1. Create an ESP32 project and upload `demo/esp32-i2c/initial-evidence.zip` using automatic categories.
-2. Upload `sensor-symbols.kicad_sch` with category **schematic** to see embedded pin metadata; use the `.net` fixture for assumed pin-to-net connectivity.
+2. Upload `sensor-symbols.kicad_sch` with category **schematic** to see embedded pin metadata and its drawn pin-to-label connections; use the `.net` fixture for assumed full-project connectivity.
 3. Upload `sensor-datasheet.txt` from the same directory with category **datasheet**.
 4. Inspect the processed `failure.csv`: address `0x49`, address-byte NACK.
 5. Open an investigation and correlate evidence. The firmware address differs from the model’s documented `0x48` address.
@@ -80,7 +80,7 @@ The sensor model, bus capture and serial output are fictional, reproducible fixt
 | CSV | `time` in seconds, finite numeric channel values in volts, strictly increasing samples |
 | C/C++/INO/H/HPP | Bounded Arduino `Wire` and ESP-IDF designated I2C configuration analysis; no compilation/execution |
 | KiCad `.net` | Exported S-expression components, pins and net connectivity |
-| KiCad `.kicad_sch` | Component properties, embedded pin number/name/type metadata and net labels; no inferred wire geometry or pin connectivity |
+| KiCad `.kicad_sch` | Component properties, embedded pin metadata, root-sheet orthogonal wire geometry, labels, and supported pin-to-net connections; unsupported transforms and hierarchy are disclosed, exported `.net` is recommended for authoritative connectivity |
 | ZIP | Safe bounded import of supported files; no nested archives or links |
 
 CSV channel names: `scl,sda` for I2C; `rx` for UART; `clk,mosi,cs` for SPI. Threshold, UART baud, CPOL and CPHA are configurable. Decoders report sampling limitations. Initial modes are seven-bit I2C, non-inverted UART 8N1, and active-low-CS/MSB-first/eight-bit SPI MOSI.
