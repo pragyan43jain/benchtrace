@@ -5,9 +5,25 @@ import time
 import uuid
 import urllib.request
 import urllib.error
+import csv
+import tempfile
 from pathlib import Path
 import os
 BASE=os.getenv('BENCHTRACE_URL','http://localhost:8080')
+
+def make_ten_bit_capture(path):
+    samples=[]
+    def hold(clock,data,n=10):samples.extend([(clock*3.3,data*3.3)]*n)
+    def send(value,ack=True):
+        for bit in [int(x) for x in f'{value:08b}']+[int(not ack)]:
+            hold(0,bit);hold(1,bit)
+    hold(1,1);hold(1,0)
+    address=0x2AA
+    send(0xF0|((address>>7)&0x06));send(address&0xFF)
+    hold(0,0);hold(1,0);hold(1,1)
+    with path.open('w',newline='') as f:
+        writer=csv.writer(f);writer.writerow(['time','scl','sda'])
+        for i,(scl,sda) in enumerate(samples):writer.writerow([f'{i*0.5e-6:.9f}',scl,sda])
 class Client:
     def __init__(self):
         self.jar=http.cookiejar.CookieJar();self.http=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
@@ -46,17 +62,25 @@ def main():
     c.upload(project,demo/'initial-evidence.zip');c.upload(project,demo/'sensor-symbols.kicad_sch','schematic');c.upload(project,demo/'sensor-datasheet.txt','datasheet')
     c.upload(project,demo/'sensor-model.pdf','datasheet')
     c.upload(project,demo/'verification.csv','measurement')
+    with tempfile.TemporaryDirectory(prefix='benchtrace-i2c-') as directory:
+        ten_bit_path=Path(directory)/'ten-bit-capture.csv'
+        make_ten_bit_capture(ten_bit_path)
+        c.upload(project,ten_bit_path,'measurement')
     deadline=time.monotonic()+180
     while time.monotonic()<deadline:
         files=c.request(root)['files']
         if any(f['status']=='failed' for f in files):raise AssertionError(files)
-        if len(files)==9 and all(f['status']=='ready' for f in files):break
+        if len(files)==10 and all(f['status']=='ready' for f in files):break
         time.sleep(2)
     else:raise AssertionError('Processing timeout')
     wave=next(f for f in files if f['name']=='failure.csv')
     stranger.request(root+'/files/'+wave['id'],expected=404)
     analysis=c.request(root+'/files/'+wave['id'])['analysis'];assert analysis['protocols']['i2c']['frames'][0]['address']==0x49
     assert analysis['protocols']['i2c']['frames'][0]['bytes'][0]['ack'] is False
+    ten_bit=next(f for f in files if f['name']=='ten-bit-capture.csv')
+    ten_bit_analysis=c.request(root+'/files/'+ten_bit['id'])['analysis']['protocols']['i2c']
+    assert ten_bit_analysis['reliable']
+    assert (ten_bit_analysis['frames'][0]['address'],ten_bit_analysis['frames'][0]['address_width'])==(0x2AA,10)
     components=c.request(root+'/components')
     assert len(components)==5
     symbol=next(x for x in components if x['reference']=='U3')

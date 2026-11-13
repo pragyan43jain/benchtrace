@@ -14,6 +14,39 @@ def i2c_fixture(address=0x49,ack=False):
     hold(0,0);hold(1,0);hold(1,1)
     a=np.array(samples);return np.arange(len(a))*0.5e-6,a[:,0],a[:,1]
 
+def i2c_ten_bit_fixture(address=0x2AA,read=False,ack=True,second_ack=True):
+    samples=[]
+    def hold(c,d,n=10): samples.extend([(c*3.3,d*3.3)]*n)
+    def start(repeated=False):
+        if repeated:
+            hold(0,1);hold(1,1)
+        else:
+            hold(1,1)
+        hold(1,0)
+    def byte(value,acknowledged=True):
+        for bit in [int(x) for x in f'{value:08b}']+[int(not acknowledged)]:
+            hold(0,bit);hold(1,bit)
+    start()
+    byte(0xF0|((address>>7)&0x06))
+    byte(address&0xFF,second_ack)
+    if read:
+        start(repeated=True)
+        byte(0xF1|((address>>7)&0x06))
+        byte(0x35,ack)
+    hold(0,0);hold(1,0);hold(1,1)
+    a=np.array(samples);return np.arange(len(a))*0.5e-6,a[:,0],a[:,1]
+
+def i2c_ten_bit_read_only_fixture(address=0x2AA):
+    samples=[]
+    def hold(c,d,n=10): samples.extend([(c*3.3,d*3.3)]*n)
+    def byte(value,acknowledged=True):
+        for bit in [int(x) for x in f'{value:08b}']+[int(not acknowledged)]:
+            hold(0,bit);hold(1,bit)
+    hold(1,1);hold(1,0)
+    byte(0xF1|((address>>7)&0x06));byte(0x35)
+    hold(0,0);hold(1,0);hold(1,1)
+    a=np.array(samples);return np.arange(len(a))*0.5e-6,a[:,0],a[:,1]
+
 def test_i2c_address_and_nack():
     t,c,d=i2c_fixture();r=decode_i2c(t,c,d)
     assert r['reliable'] and r['frames'][0]['address']==0x49
@@ -121,6 +154,46 @@ def test_firmware_does_not_analyze_string_literals():
 def test_ten_bit_i2c_prefix_is_not_treated_as_reliable_seven_bit_address():
     r=decode_i2c(*i2c_fixture(0x78,True))
     assert not r['reliable'] and any('10-bit' in w for w in r['warnings'])
+
+def test_i2c_decodes_ten_bit_write_address_and_acknowledgements():
+    r=decode_i2c(*i2c_ten_bit_fixture())
+    frame=r['frames'][0]
+    assert r['reliable']
+    assert (frame['address'],frame['address_width'],frame['direction'])==(0x2AA,10,'write')
+    assert frame['address_header_bytes']==2 and frame['address_acknowledged']
+
+@pytest.mark.parametrize('address',[0x001,0x155,0x2AA,0x3FF])
+def test_i2c_ten_bit_address_assembly_across_high_bits(address):
+    frame=decode_i2c(*i2c_ten_bit_fixture(address))['frames'][0]
+    assert frame['address']==address and frame['address_width']==10
+
+def test_i2c_ten_bit_nack_is_not_latched_for_a_repeated_start_read():
+    r=decode_i2c(*i2c_ten_bit_fixture(read=True,second_ack=False))
+    assert r['frames'][0]['address']==0x2AA
+    assert not r['frames'][0]['address_acknowledged']
+    assert r['frames'][1]['address'] is None
+    assert not r['reliable']
+
+def test_i2c_decodes_ten_bit_read_after_repeated_start():
+    r=decode_i2c(*i2c_ten_bit_fixture(read=True))
+    assert r['reliable'] and len(r['frames'])==2
+    assert r['frames'][0]['termination']=='restart'
+    assert r['frames'][1]['address']==0x2AA
+    assert r['frames'][1]['direction']=='read'
+    assert r['frames'][1]['address_header_bytes']==1
+
+def test_i2c_marks_unresolved_ten_bit_read_and_incomplete_address_unreliable():
+    read_only=decode_i2c(*i2c_ten_bit_read_only_fixture())
+    assert read_only['frames'][0]['address'] is None
+    assert not read_only['reliable']
+    samples=[]
+    def hold(c,d,n=10): samples.extend([(c*3.3,d*3.3)]*n)
+    hold(1,1);hold(1,0)
+    for bit in [int(x) for x in f'{0xF4:08b}']+[1]: hold(0,bit);hold(1,bit)
+    a=np.array(samples);t=np.arange(len(a))*0.5e-6
+    incomplete=decode_i2c(t,a[:,0],a[:,1])
+    assert not incomplete['reliable']
+    assert any('second address byte is missing' in w for w in incomplete['warnings'])
 
 def test_empty_uart_and_spi_are_not_claimed_decodable():
     t=np.arange(100)*1e-7;high=np.full(100,3.3)

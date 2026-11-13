@@ -81,16 +81,47 @@ def decode_i2c(t, scl, sda, threshold=1.65):
                 current['bytes'].append(dict(value=value, ack=not bool(bits[8]), time=float(t[i])))
                 if len(current['bytes'])==1:
                     current.update(address=value>>1, direction='read' if value&1 else 'write')
-                    if value&0xF8==0xF0:warnings.append('10-bit address prefix detected; this decoder supports only 7-bit addresses')
                 bits=[]
     if current is not None:
         current['termination']='truncated'; frames.append(current); warnings.append('Capture ended without STOP')
     if not frames: warnings.append('No complete START-address transaction found')
     if any(not f.get('bytes') for f in frames): warnings.append('Transaction has no complete address byte')
+    ten_bit_latch = None
+    for frame in frames:
+        byte_frames = frame.get('bytes', [])
+        if not byte_frames:
+            if frame.get('termination') != 'restart': ten_bit_latch = None
+            continue
+        first = byte_frames[0]['value']
+        if first & 0xF8 == 0xF0:
+            high_address_bits = (first & 0x06) << 7
+            frame['address_width'] = 10
+            frame['direction'] = 'read' if first & 1 else 'write'
+            frame['address_header_bytes'] = 1 if first & 1 else 2
+            if first & 1:
+                frame['address'] = ten_bit_latch if ten_bit_latch is not None and (ten_bit_latch & 0x300) == high_address_bits else None
+                if frame['address'] is None:
+                    warnings.append('10-bit read address prefix has no matching acknowledged write-address phase in this capture')
+                frame['address_acknowledged'] = bool(byte_frames[0]['ack'])
+            elif len(byte_frames) >= 2:
+                frame['address'] = high_address_bits | byte_frames[1]['value']
+                frame['address_acknowledged'] = bool(byte_frames[0]['ack'] and byte_frames[1]['ack'])
+                ten_bit_latch = frame['address'] if frame['address_acknowledged'] else None
+            else:
+                frame['address'] = None
+                frame['address_acknowledged'] = False
+                warnings.append('Incomplete 10-bit address: second address byte is missing')
+                ten_bit_latch = None
+        else:
+            frame.update(address=first >> 1, address_width=7,
+                         direction='read' if first & 1 else 'write',
+                         address_header_bytes=1, address_acknowledged=bool(byte_frames[0]['ack']))
+            ten_bit_latch = None
+        if frame.get('termination') != 'restart': ten_bit_latch = None
     periods = np.diff(t[np.flatnonzero(~c[:-1] & c[1:])+1])
     return dict(frames=frames, reliable=not warnings, warnings=list(dict.fromkeys(warnings)),
                 clock_hz=float(1/np.median(periods)) if len(periods) else None,
-                limitations='7-bit addressing only; digital threshold does not establish rise-time compliance or pull-up resistance')
+                limitations='Supports decoded 7-bit and 10-bit address phases; digital threshold does not establish rise-time compliance or pull-up resistance')
 
 
 def decode_uart(t, rx, baud=115200, threshold=1.65):
