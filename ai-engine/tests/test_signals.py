@@ -297,6 +297,35 @@ def test_firmware_flags_wire_available_wait_without_local_timeout():
     bounded=firmware('void readSensor(){ auto start=millis(); while(Wire.available()==0) { if(millis()-start>20) break; } }')['findings']
     assert not any(x['type']=='unbounded_i2c_wait' for x in bounded)
 
+def test_diagnostic_separates_transaction_findings_from_pin_routing():
+    source='Wire.begin(21,22); Wire.beginTransmission(0x48); Wire.endTransmission();'
+    files=[dict(id='fw',name='main.ino',category='firmware',analysis=firmware(source))]
+    result=diagnose(files)
+    transaction=next(h for h in result['hypotheses'] if h['key']=='transaction')
+    pins=next(h for h in result['hypotheses'] if h['key']=='pins')
+    assert transaction['supporting_evidence']
+    assert not pins['supporting_evidence']
+
+def test_project_level_initialization_correlation_across_firmware_files():
+    files=[
+        dict(id='setup',name='bus.cpp',category='firmware',analysis=firmware('void setupBus(){ Wire.begin(21,22); }')),
+        dict(id='read',name='sensor.cpp',category='firmware',analysis=firmware('void readSensor(){ Wire.beginTransmission(0x48); }')),
+    ]
+    result=diagnose(files)
+    transaction=next(h for h in result['hypotheses'] if h['key']=='transaction')
+    pins=next(h for h in result['hypotheses'] if h['key']=='pins')
+    assert not transaction['supporting_evidence']
+    assert transaction['contradictory_evidence'][0]['file_id']=='setup'
+    assert not pins['supporting_evidence']
+
+def test_absent_initialization_is_not_misreported_as_pin_routing():
+    analysis=firmware('Wire.beginTransmission(0x48);')
+    result=diagnose([dict(id='fw',name='main.ino',category='firmware',analysis=analysis)])
+    transaction=next(h for h in result['hypotheses'] if h['key']=='transaction')
+    pins=next(h for h in result['hypotheses'] if h['key']=='pins')
+    assert transaction['supporting_evidence'][0]['excerpt'].startswith('No Wire.begin')
+    assert not pins['supporting_evidence']
+
 def test_firmware_function_signatures_cover_project_types_and_ignore_prototypes():
     source='''// void commentedOut() {}
 esp_err_t configure_bus(const i2c_master_bus_config_t *config) { return ESP_OK; }

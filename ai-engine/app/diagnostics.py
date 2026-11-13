@@ -6,8 +6,13 @@ def diagnose(files, tests=None, problem=""):
     if problem and re.search(r'\b(?:SPI|UART|CAN|USB)\b',problem,re.I) and not re.search(r'\bI[2²]C\b',problem,re.I):
         return dict(applicable=False,problem=problem,hypotheses=[],summary='Current root-cause rules support I2C investigations. Use waveform analysis for this protocol; no I2C diagnosis was inferred.')
     symptoms=[label for pattern,label in [(r'nack|not ack|no ack','missing acknowledgement'),(r'timeout|timed out','timeout'),(r'stuck|held low','stuck bus'),(r'address','address concern'),(r'pin|wir(?:e|ing)','routing concern')] if re.search(pattern,problem,re.I)]
-    addresses=[]; documented=[];nacks=[];acks=[];pins=[];circuits=[];missing=[];logs=[];clocks=[];measured_clocks=[]
+    addresses=[]; documented=[];nacks=[];acks=[];pins=[];circuits=[];pin_conflicts=[];initialization=[];transaction_findings=[];logs=[];clocks=[];measured_clocks=[]
     def citation(f,excerpt,**kw): return dict(file_id=f['id'],source=f['name'],excerpt=excerpt,**kw)
+    project_has_i2c_init=any(
+        x.get('type')=='i2c_begin'
+        for f in files
+        for x in f.get('analysis',{}).get('findings',[])
+    )
     for f in files:
         a=f['analysis']
         for x in a.get('findings',[]):
@@ -20,7 +25,11 @@ def diagnose(files, tests=None, problem=""):
                     addresses.append((x['values'][0],citation(f,x['excerpt'],line=x['line'])))
             if x['type']=='i2c_begin' and len(x.get('values',[])) in (2,3): pins.append((x.get('values',[]),citation(f,x['excerpt'],line=x['line'])))
             if x['type']=='i2c_clock' and x.get('values') and x['values'][0]:clocks.append((x['values'][0],citation(f,x['excerpt'],line=x['line'])))
-            if x['type'] in ('missing_init','pin_conflict'):missing.append(citation(f,x['excerpt'],line=x['line']))
+            if x['type']=='missing_init' and not project_has_i2c_init:
+                initialization.append(citation(f,x['excerpt'],line=x['line']))
+            if x['type']=='pin_conflict':pin_conflicts.append(citation(f,x['excerpt'],line=x['line']))
+            if x['type'] in ('unchecked_result','unchecked_i2c_read','unbounded_i2c_wait'):
+                transaction_findings.append(citation(f,x['excerpt'],line=x['line']))
         if a.get('kind')=='circuit':circuits.append((a,citation(f,a['scope'])))
         if f.get('category')=='log' or f['name'].lower().startswith('serial'):
             for c in a.get('chunks',[]):
@@ -47,6 +56,7 @@ def diagnose(files, tests=None, problem=""):
         'power':'Live voltage probing can damage equipment or injure the operator. Use an appropriately rated meter and probes, confirm the ground reference, and do not exceed documented limits.',
         'pullups':'Disconnect power before measuring resistance or changing pull-ups. For powered waveform measurements, verify analyzer/probe voltage limits and ground reference first.',
         'pins':'Disconnect power before continuity checks or rewiring. Avoid shorting pins; confirm the board and sensor voltage levels before powered measurements.',
+        'transaction':'Before changing firmware on connected hardware, confirm the board and sensor voltage levels and use a current-limited low-voltage bench supply where appropriate.',
         'timing':'Before attaching probes, confirm voltage limits, ground reference and probe loading are suitable for the board and bus.'}
     def add(key,title,support,against,test,confirm,reject,unknowns):
         hypotheses.append(dict(key=key,title=title,supporting_evidence=support,contradictory_evidence=against,
@@ -65,6 +75,18 @@ def diagnose(files, tests=None, problem=""):
         'The corrected documented address ACKs and repeat communication succeeds while the old address NACKs.',
         'The original address ACKs reliably and is valid for the installed part.',
         ['Datasheet applicability and actual address straps need physical verification.'])
+    init_contradictions=[]
+    if project_has_i2c_init:
+        for f in files:
+            for x in f.get('analysis',{}).get('findings',[]):
+                if x.get('type')=='i2c_begin':
+                    init_contradictions.append(citation(f,x['excerpt'],line=x['line']))
+    add('transaction','Firmware initialization or error handling may hide I2C failures',
+        initialization+transaction_findings,init_contradictions,
+        'Check the complete firmware path for a successful I2C initialization, record endTransmission status and requested byte counts, and bound waits before repeating the same capture.',
+        'The instrumented run reports an initialization, NACK, short-read or timeout failure at the failing transaction; correcting the identified path removes that failure.',
+        'The active transaction path initializes the bus and checks transmission status, received byte count and bounded timeout behavior.',
+        ['Static patterns do not prove that code executes or that an error caused the reported symptom. Definitions and calls may be split across files.'])
     add('power','Sensor supply or ground is missing or incompatible',[c for _,c in nacks],[c for _,c in acks],
         'On a low-voltage isolated bench setup, measure sensor VDD relative to sensor GND and compare with the exact datasheet. Do not probe mains or unknown high-voltage circuits.',
         'Measured supply is absent or outside the applicable documented range and correcting it restores communication.',
@@ -73,7 +95,7 @@ def diagnose(files, tests=None, problem=""):
         'Capture analog SDA/SCL at the sensor. Compare idle levels and rise times to the applicable bus and sensor specifications; inspect pull-ups with power removed.',
         'Measured rise times or voltage levels violate documented limits and a corrected pull-up network restores ACKs.',
         'Analog levels and rise times meet applicable limits throughout the failed transaction.', ['Digital NACKs alone cannot establish missing pull-ups.'])
-    pin_support=list(missing);pin_against=[]
+    pin_support=list(pin_conflicts);pin_against=[]
     for circuit,source in circuits:
         controllers={c['reference'] for c in circuit['components'] if 'ESP32' in c.get('value','').upper()}
         expected={}
@@ -89,7 +111,7 @@ def diagnose(files, tests=None, problem=""):
             for values,fw_source in pins:
                 if len(values)>=2 and None not in values[:2]:
                     (pin_against if values[:2]==[expected['SDA'],expected['SCL']] else pin_support).extend([fw_source,cite])
-    add('pins','SDA/SCL routing or initialization is inconsistent',pin_support,pin_against,
+    add('pins','SDA/SCL routing conflicts with the extracted hardware evidence',pin_support,pin_against,
         'Compare Wire.begin SDA/SCL arguments with extracted schematic or netlist connections, then check continuity with power disconnected.',
         'Measured wiring differs from configured pins and correcting it restores communication.',
         'Continuity and configured pins agree with the installed wiring.', ['Schematic labels do not prove physical connectivity.'])

@@ -38,7 +38,7 @@
     "name": "missing_initialization",
     "firmware": "Wire.beginTransmission(0x49);",
     "document": "Operating temperature range is documented separately.",
-    "expected_first": "pins",
+    "expected_first": "transaction",
     "expected_contradiction": false
   },
   {
