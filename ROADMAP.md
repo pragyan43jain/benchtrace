@@ -11,8 +11,8 @@ No production-completeness claim is made until all required checks pass.
 | 4 Engineering intelligence | Partially implemented | Bounded firmware patterns and KiCad netlist graph; further static-analysis edge cases remain |
 | 5 Diagnostics | Implemented I2C workflow | Selected evidence, problem scope, five competing rule families, traceable tests and ranking |
 | 6 Product workflow | Implemented; browser regression underway | Durable investigations, reports, procedures/components/knowledge, scoped WebSocket events |
-| 7 Production quality | In progress | Security checks and local deployment pass; final CI/release and remaining audit items pending |
-| 8 Release | In progress | Required docs, screenshots, reproducible simulation and GitHub milestones; image publication pending |
+| 7 Production quality | In progress | Security checks and local deployment pass; CI is green through run 43375059230, later browser CI is in progress, and product audit items remain |
+| 8 Release | In progress | Required docs, screenshots, reproducible simulation and GitHub milestones; GHCR prerelease workflow 43374242750 succeeded for all three images |
 
 ## Design commitments
 - All demo captures explicitly simulated; no physical verification claims.
@@ -52,9 +52,14 @@ Milestone 3 verification completed: rebuilt-image engine suite **48 passed** (on
 
 Pinned the semantic model to an immutable repository revision and verified every downloaded artifact with SHA-256 during image builds. Added vector identity to document and knowledge records, version-scoped cache/search behavior, and bounded idle-worker migration of legacy vectors from preserved source text. Firmware analysis now resolves common numeric constants and flags same-pin I2C setup and invalid seven-bit targets with contextual explanations. Added UART/SPI capture-boundary uncertainty reporting and automated WCAG scans.
 
-Verified: engine suite **52 passed**; API integration and negative security workflows passed; browser suite **4 passed**, including desktop/mobile WCAG scans; Go race tests/vet passed; GitHub Actions run **43373860041 succeeded** across Go, frontend, Docker, engine, API/security and browser jobs. Local database migration 003 applied and all 35 existing vectors carry the pinned model identity. GHCR image publication remains untested; no hosted production deployment is claimed.
+Verified: engine suite **56 passed**; API integration and negative security workflows passed; browser suite **4 passed**, including desktop/mobile WCAG scans; Go race tests/vet passed; GitHub Actions run **43373860041 succeeded** across Go, frontend, Docker, engine, API/security and browser jobs. Local database migration 003 applied and all 35 existing vectors carry the pinned model identity. GHCR image publication was verified by workflow 43374242750; no hosted production deployment is claimed.
 
 
 ## Milestone 5 — expanded I2C diagnostic evaluation
 
-Added fixed scenarios for chained address constants, strap-dependent alternate addresses and invalid 8-bit values passed to the 7-bit Wire API. The engine suite now reports **56 passed**. Commits `e3150bc` (unchecked I2C read finding) and `dad82b7` (expanded dataset) are pushed; their CI runs are pending. GHCR prerelease workflow `43374242750` completed successfully for backend, engine and frontend. Pulling the large engine image locally remains unverified; the backend image pull succeeded.
+Added fixed scenarios for chained address constants, strap-dependent alternate addresses and invalid 8-bit values passed to the 7-bit Wire API. The engine suite now reports **56 passed**. Commits `e3150bc` (unchecked I2C read finding) and `dad82b7` (expanded dataset) are pushed; their CI runs are green. GHCR prerelease workflow `43374242750` completed successfully for backend, engine and frontend. Pulling the large engine image locally remains unverified; the backend image pull succeeded.
+
+
+## Milestone 6 — verification feedback in the investigation UI
+
+Recording a user test now immediately reruns the diagnosis using the selected evidence and saved test observations, then reloads hypothesis ranking and status. The UI displays the ranking method and identifies test observations as user-recorded evidence. Local production build and Vitest pass; focused Playwright investigation regression passes against the rebuilt web container. GitHub runs 43375259585 and 43375475924 are still in progress as of this update. The full master audit remains open.
