@@ -132,3 +132,7 @@ Pulled all services and dependencies, started an isolated published-image stack 
 ## Milestone 20 — Node 24 CI runtime
 
 Updated checkout, Go setup, Node setup and artifact upload actions to their current Node 24 releases. Full CI run **43391406460** passed with the updated actions: Go race/vet, frontend build/unit/audit, all 68 engine tests, API/security integration, published-image Compose validation and all four Playwright tests. The full run no longer emits the prior Node 20 action deprecation warnings.
+
+## Milestone 21 — I2C ten-bit address decoding
+
+The waveform decoder now assembles ten-bit write addresses from their prefix and low address byte, reports address width and address-byte ACK state, and resolves repeated-start read headers only when the matching acknowledged write-address phase is in the capture. Missing second address bytes and unmatched reads are marked unreliable. Diagnostic address comparisons now keep ten-bit captures out of seven-bit firmware/datasheet hypotheses. Added fixed waveform tests across all four high-bit combinations, ACK/NACK behavior, repeated-start reads and incomplete captures, plus a generated-capture upload assertion in API integration. Verification: engine suite **77 passed**; full API integration and negative security regression passed locally. Full CI run **43392667200** passed for the decoder/API integration revision with 76 engine tests. Follow-up width-isolation commit `cb5c076` is running full CI as **43393035693**.

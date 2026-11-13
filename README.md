@@ -90,7 +90,7 @@ The sensor model, bus capture and serial output are fictional, reproducible fixt
 | KiCad `.kicad_sch` | Component properties, embedded pin metadata, root-sheet orthogonal wire geometry, labels, and supported pin-to-net connections; unsupported transforms and hierarchy are disclosed, exported `.net` is recommended for authoritative connectivity |
 | ZIP | Safe bounded import of supported files; no nested archives or links |
 
-CSV channel names: `scl,sda` for I2C; `rx` for UART; `clk,mosi,cs` for SPI. Threshold, UART baud, CPOL and CPHA are configurable. Decoders report sampling limitations. Initial modes are seven-bit I2C, non-inverted UART 8N1, and active-low-CS/MSB-first/eight-bit SPI MOSI.
+CSV channel names: `scl,sda` for I2C; `rx` for UART; `clk,mosi,cs` for SPI. Threshold, UART baud, CPOL and CPHA are configurable. Decoders report sampling limitations. I2C supports seven-bit addresses and ten-bit address phases, including repeated-start reads when the capture includes the matching acknowledged write-address phase. UART is non-inverted 8N1; SPI is active-low-CS/MSB-first/eight-bit MOSI.
 
 Limits: 10 MiB per file, 30 MiB per upload/extracted archive, 100 ZIP entries, 200000 samples and 16 waveform channels. Unsupported or invalid inputs fail visibly.
 
