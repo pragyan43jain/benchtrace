@@ -26,13 +26,8 @@ type uidKey struct{}
 
 func (s *Server) Routes() http.Handler {
 	m := http.NewServeMux()
-	m.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
-		if s.DB.Ping(r.Context()) != nil {
-			fail(w, 503, "Database unavailable")
-			return
-		}
-		respond(w, 200, map[string]string{"status": "ok"})
-	})
+	m.HandleFunc("GET /api/health", s.readiness)
+	m.HandleFunc("GET /api/live", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]string{"status": "ok"}) })
 	m.HandleFunc("POST /api/auth/register", s.register)
 	m.HandleFunc("POST /api/auth/login", s.login)
 	m.Handle("POST /api/auth/logout", s.require(s.logout))
@@ -122,7 +117,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 			fail(w, 403, "Origin not allowed")
 			return
 		}
-		if r.URL.Path != "/api/health" {
+		if r.URL.Path != "/api/health" && r.URL.Path != "/api/live" {
 			host, _, err := net.SplitHostPort(r.RemoteAddr)
 			if err != nil {
 				host = r.RemoteAddr

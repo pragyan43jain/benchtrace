@@ -1,8 +1,12 @@
 """Deterministic evidence ranking. No score is a probability of physical truth."""
 import re
+from app.protocol_diagnostics import diagnose_protocol
 
 
 def diagnose(files, tests=None, problem=""):
+    protocol_match=re.findall(r'\b(UART|SPI)\b',problem,re.I)
+    if len(set(p.upper() for p in protocol_match))==1 and not re.search(r'\bI[2²]C\b',problem,re.I):
+        return diagnose_protocol(files,tests,problem,protocol_match[0].lower())
     if problem and re.search(r'\b(?:SPI|UART|CAN|USB)\b',problem,re.I) and not re.search(r'\bI[2²]C\b',problem,re.I):
         return dict(applicable=False,problem=problem,hypotheses=[],summary='Current root-cause rules support I2C investigations. Use waveform analysis for this protocol; no I2C diagnosis was inferred.')
     symptoms=[label for pattern,label in [(r'nack|not ack|no ack','missing acknowledgement'),(r'timeout|timed out','timeout'),(r'stuck|held low','stuck bus'),(r'address','address concern'),(r'pin|wir(?:e|ing)','routing concern')] if re.search(pattern,problem,re.I)]

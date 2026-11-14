@@ -115,3 +115,7 @@ python3 scripts/security-check.py
 Integration and browser tests create uniquely named test accounts/projects. Use a test deployment. For installed Chrome, run browser tests with `CHROME_PATH=/usr/bin/google-chrome`. Actual results and remaining gates are recorded in [ROADMAP.md](ROADMAP.md); evaluation scope is in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 Contributions should include reproducible evidence and tests: [CONTRIBUTING.md](CONTRIBUTING.md). Licensed under [MIT](LICENSE).
+
+## Recovery and service readiness
+
+See [operations](docs/OPERATIONS.md) for consistent backups, isolated restore and dependency monitoring, and [physical validation](docs/HARDWARE-VALIDATION.md) for the still-unverified hardware evaluation procedure. UART/SPI investigations now provide bounded capture-quality hypotheses when selected decoder evidence is available; they do not establish general electrical root causes.

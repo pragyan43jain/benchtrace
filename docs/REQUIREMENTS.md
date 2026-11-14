@@ -1,6 +1,6 @@
 # Completion audit against the master prompt
 
-Status describes demonstrated behavior, not the presence of a UI or a test name. Every explicit Definition of Done item has been verified for the documented v0.1.9 supported scope. The limits below remain deliberate and disclosed boundaries; this is not a claim of general-purpose C++/KiCad analysis, physical hardware validation, or hosted public service.
+Status describes demonstrated behavior, not the presence of a UI or a test name. The v0.1.9 tests verify the documented initial scope, not the full breadth of the master specification. Physical validation, broader diagnostic accuracy, full firmware/circuit semantics and public-service operations remain incomplete. The limits below remain deliberate and disclosed boundaries; this is not a claim of general-purpose C++/KiCad analysis, physical hardware validation, or hosted public service.
 
 | Requirement | Current implementation / evidence | Status / remaining proof |
 |---|---|---|
@@ -41,3 +41,7 @@ Status describes demonstrated behavior, not the presence of a UI or a test name.
 ## Scope boundaries that remain explicit
 
 No physical hardware is available or claimed. The prompt permits reproducible simulated captures, so physical testing is not a release blocker for the disclosed demo. OCR is English-only and bounded to six scan-only pages per PDF; arbitrary C++ execution, unsupported KiCad hierarchy/buses/mirror forms/diagonal geometry, UART parity and SPI word widths other than eight remain outside the supported subset. External provider credentials are optional because the local semantic/extractive workflow is functional; live provider verification must remain unclaimed without credentials.
+
+## Post-audit improvements
+
+Dependency readiness now checks PostgreSQL, Redis and the engine, with independent liveness. Private backups and fresh-project restore are implemented; an isolated restore recovered 681 uploaded files with matching hashes and passed API/security integration. Redis and engine outage drills returned readiness 503, liveness 200, and recovered to readiness 200. UART/SPI now support bounded capture-quality hypotheses, not general electrical fault diagnosis. See `docs/OPERATIONS.md` and `docs/HARDWARE-VALIDATION.md`.

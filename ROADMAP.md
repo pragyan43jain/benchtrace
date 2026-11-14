@@ -216,3 +216,11 @@ Published the [v0.1.9 release](https://github.com/pragyan43jain/benchtrace/relea
 ## Milestone 40 — final requirements and CI audit
 
 Reconciled the roadmap summary with the stable release and recorded the final verification workflow. Full GitHub workflow **43430047979** completed successfully on commit `2b7079a`, including Go race/vet, frontend build/unit/audit, engine tests and deterministic evaluation, API/security integration, four Playwright workflows, and the `v0.1.9` image-overlay check. The requirement-by-requirement evidence and explicit limitations are in `docs/REQUIREMENTS.md`; no physical hardware or hosted service is claimed.
+
+## Milestone 41 — operational recovery and protocol investigation follow-up
+
+Added concurrent dependency readiness with a three-second timeout and independent API liveness; meaningful failure regression passes with Go race/vet. Added private, consistent PostgreSQL/upload backups, checksum verification and fresh-project-only restore with archive validation. The isolated restore recovered 681 upload files with matching hashes; API/security regression passed on the restored stack. Redis and engine outage drills each returned readiness 503 with liveness 200 and recovered to readiness 200. Added an external-monitor-compatible readiness probe and documented operations and physical validation procedure. No physical captures were supplied, so real-hardware validation remains unverified.
+
+Added UART framing and SPI capture-quality hypotheses grounded in selected decoder output, including contradictory clean captures, user-attributed tests and confirm/reject experiments. This expands investigation coverage but does not establish arbitrary electrical root causes. Engine suite: 98 passed (one upstream test-client deprecation warning). Broader real-world accuracy, full firmware/circuit semantics, account recovery/MFA/sharing, automated alert destinations and scheduled backup retention remain outstanding.
+
+Final local browser regression: all four Playwright workflows passed against the updated main deployment. Temporary restore-test containers and volumes were removed; the original deployment and private backup remain. Physical hardware validation and the other gaps above are not marked complete.
